@@ -598,10 +598,14 @@ aplicarAcento(vibeAtual);
 
 document.querySelectorAll(".vibe").forEach(btn=>{
   btn.addEventListener("click",()=>{
-    document.querySelectorAll(".vibe").forEach(b=>b.setAttribute("aria-pressed","false"));
-    btn.setAttribute("aria-pressed","true");
-    vibeAtual=btn.dataset.vibe; aplicarAcento(vibeAtual);
-    resetar();
+    const v=btn.dataset.vibe;
+    document.querySelectorAll(".vibe").forEach(b=>b.setAttribute("aria-pressed", b===btn?"true":"false"));
+    if(v===vibeAtual && reveal.classList.contains("show")) return;
+    vibeAtual=v; aplicarAcento(v);
+    // com mensagem na tela -> troca pro novo tipo na hora (fluido);
+    // sem mensagem -> apenas recolore e volta pro orbe
+    if(reveal.classList.contains("show")) swapMensagem();
+    else resetar();
   });
 });
 
@@ -636,7 +640,7 @@ async function abrir(){
   // 1) inspira
   orb.classList.add("opening");
   somAbrir(); if(navigator.vibrate) try{navigator.vibrate(8)}catch(e){}
-  await wait(motionOK ? 520 : 60);
+  await wait(motionOK ? 440 : 50);
   if(myRun!==runId) return;
 
   // 2) floresce — orbe se dissolve, luz suave, motes sobem
@@ -648,7 +652,7 @@ async function abrir(){
   if(navigator.vibrate) try{navigator.vibrate(rich?[10,40,12]:[10])}catch(e){}
   hint.classList.add("gone");
 
-  await wait(motionOK ? 300 : 50);
+  await wait(motionOK ? 240 : 40);
   if(myRun!==runId) return;
 
   // 3) revela
@@ -658,20 +662,22 @@ async function abrir(){
   abrindo=false; openBtn.disabled=false;
 }
 
-/* "Outra": re-sorteia sem reabrir o orbe — troca suave do conteúdo do card */
-async function outra(){
-  if(abrindo) return; abrindo=true; againBtn.disabled=true;
+/* Troca o conteúdo do card por um novo sorteio (mesma vibe ou outra), com
+   fade suave e SEM reabrir o orbe. Cancelável via runId: cliques rápidos
+   (inclusive trocar de vibe várias vezes) sempre exibem o último pedido. */
+async function swapMensagem(){
   const myRun=++runId;
+  reveal.classList.add("swapping");                 // some já (feedback imediato)
   const item = await sortear(PERFIL[vibeAtual]);
-  if(myRun!==runId || !item){ abrindo=false; againBtn.disabled=false; return; }
-  reveal.classList.add("swapping");
-  await wait(motionOK ? 250 : 30);
-  if(myRun!==runId){ abrindo=false; againBtn.disabled=false; return; }
+  if(myRun!==runId) return;                          // veio outro clique -> deixa pro novo
+  if(!item){ reveal.classList.remove("swapping"); return; }
+  await wait(motionOK ? 190 : 20);
+  if(myRun!==runId) return;
   preencherCard(item);
+  void reveal.offsetWidth;                           // reflow -> garante a volta suave
   reveal.classList.remove("swapping");
-  motes(12); somRevelar(false);
-  if(navigator.vibrate) try{navigator.vibrate(6)}catch(e){}
-  abrindo=false; againBtn.disabled=false;
+  motes(10); somRevelar(false);
+  if(navigator.vibrate) try{navigator.vibrate(5)}catch(e){}
 }
 
 function resetar(){
@@ -685,7 +691,7 @@ function resetar(){
 }
 
 openBtn.addEventListener("click",abrir);
-againBtn.addEventListener("click",outra);
+againBtn.addEventListener("click",swapMensagem);
 shareBtn.addEventListener("click",()=>{ if(itemAtual) compartilhar(itemAtual); });
 subBtn.addEventListener("click",()=>{ ativarPush(); abrirModal(); }); // assinatura + ativa notificacoes
 orb.addEventListener("click",()=>{ if(!orb.classList.contains("open") && !abrindo) abrir(); });
