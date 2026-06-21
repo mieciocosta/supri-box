@@ -21,6 +21,7 @@ function formatarCaixinha(c) {
   let txt = c.emoji ? `${c.emoji}\n\n` : '';
   txt += `*${c.texto}*`;
   if (c.referencia) txt += `\n\n_— ${c.referencia}_`;
+  if (c.explicacao) txt += `\n\n${c.explicacao}`;
   txt += `\n\n📦 _Sua próxima caixinha amanhã. Responda *PARAR* pra sair._`;
   return txt;
 }

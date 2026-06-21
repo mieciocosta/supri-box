@@ -13,6 +13,7 @@ model Conteudo {
   id         Int       @id @default(autoincrement())
   tipo       String    // versiculo | frase | vibe | imagem | gif
   texto      String
+  explicacao String?   // breve explicacao calorosa da mensagem
   referencia String?   // ex: "Salmos 23:1" ou autor
   emoji      String?   // usado em cards "vibe"
   mediaUrl   String?   // para imagem/gif (Giphy, CDN, etc.)

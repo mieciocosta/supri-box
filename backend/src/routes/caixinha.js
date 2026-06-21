@@ -49,6 +49,7 @@ router.get('/', async (req, res) => {
     res.json({
       tipo: escolhido.tipo,
       texto: escolhido.texto,
+      explicacao: escolhido.explicacao || '',
       ref: escolhido.referencia || '',
       emoji: escolhido.emoji || '',
       mediaUrl: escolhido.mediaUrl || '',
