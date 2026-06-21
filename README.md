@@ -17,13 +17,14 @@ supri-box/
         ├── server.js
         ├── db.js
         ├── sorteio.js    # motor de sorteio ponderado por perfil
-        ├── seed.js       # acervo curado (versículos + frases + vibes)
+        ├── seed.js       # acervo curado + planos de assinatura
         └── routes/
             ├── caixinha.js    # GET /caixinha?perfil=jovem
             ├── conteudos.js   # CRUD do acervo
             ├── usuarios.js    # cadastro + assinatura
+            ├── assinatura.js  # planos + criar Pix + status
             ├── webhook.js     # WhatsApp via Z-API
-            └── pagamento.js   # Pix via Mercado Pago
+            └── pagamento.js   # Pix avulso + webhook Mercado Pago
 ```
 
 ## Motor de segmentação
@@ -43,7 +44,7 @@ cd backend
 cp .env.example .env        # preencha DATABASE_URL
 npm install
 npx prisma db push          # cria as tabelas
-npm run seed                # popula o acervo
+npm run seed                # popula o acervo + planos
 npm run dev                 # sobe em http://localhost:3000
 ```
 
@@ -56,14 +57,31 @@ Frontend: abra `frontend/index.html` no navegador (roda offline). Pra conectar n
 3. Start command: `npx prisma db push && npm run seed && npm start`.
 4. Frontend: publique `frontend/` como site estático (Vercel/Netlify) e aponte `API_BASE` pro backend.
 
+## Assinatura via Pix (o que fatura)
+
+O motor de receita já está montado. Planos vivem no banco (`Plano`) e são populados pelo seed: **isca** (R$ 0,01), **mensal** (R$ 9,90) e **trimestral** (R$ 24,90). Ajuste preço/período à vontade.
+
+Fluxo ponta a ponta:
+
+1. `GET /assinatura/planos` — lista os planos ativos (o frontend monta os cards a partir daqui).
+2. `POST /assinatura/criar` — body `{ whatsapp, nome?, email?, perfil?, planoSlug }`. Faz upsert do usuário, cria a assinatura `pendente`, gera a cobrança Pix e devolve `{ assinaturaId, qrCode, qrCodeBase64, valor, stub }`.
+3. `GET /assinatura/:id/status` — o frontend faz polling até virar `ativa`.
+4. `POST /pagamento/webhook` — o Mercado Pago avisa o pagamento; quando `approved`, a assinatura é ativada (status `ativa` + `expiraEm`), o usuário marcado e a boas-vindas enviada no WhatsApp.
+
+**Modo dev (sem `MP_ACCESS_TOKEN`):** o Pix sai em stub e você simula a aprovação com `POST /assinatura/:id/confirmar-stub` — dá pra testar o fluxo inteiro sem credencial. No frontend, o botão "Já paguei (teste)" faz isso sozinho.
+
+O frontend (`index.html`) abre o modal de assinatura quando `API_BASE` está preenchido; sem backend, cai no link do WhatsApp.
+
 ## Integrações (já com pontos de plugue prontos)
 
 - **WhatsApp (Z-API):** webhook em `POST /webhook/zapi`. Sem credenciais, roda em modo stub (loga no console). Preencha `ZAPI_INSTANCE / ZAPI_TOKEN / ZAPI_CLIENT_TOKEN` pra enviar de verdade. Dá pra reaproveitar a infra do VittaHub.
-- **Pix (Mercado Pago):** `POST /pagamento/pix` cria a cobranca; `POST /pagamento/webhook` ativa a assinatura quando o pagamento é aprovado. Use Mercado Pago (Pix 0,99%, sem piso fixo) — evita gateways com tarifa fixa que destroem ticket baixo.
+- **Pix (Mercado Pago):** assinatura em `POST /assinatura/criar` + webhook central em `POST /pagamento/webhook`; cobrança avulsa (caixa premium) em `POST /pagamento/pix`. Use Mercado Pago (Pix 0,99%, sem piso fixo) — evita gateways com tarifa fixa que destroem ticket baixo. Aponte a URL de notificação do MP pra `…/pagamento/webhook`.
 
 ## Próximos passos
 
+- [x] Fluxo de assinatura via Pix (planos + cobrança + webhook + ativação)
+- [ ] Entrega diária automática (cron disparando a caixinha pros assinantes ativos)
+- [ ] Renovação automática quando a assinatura expira (gerar novo Pix / Pix Automático)
 - [ ] Card "vibe" com GIF real (integrar Giphy API em `mediaUrl`)
-- [ ] Pix Automático pra cobrança recorrente da assinatura
 - [ ] Painel admin do acervo
 - [ ] Geração de imagem por IA só no tier premium (preço cobre o custo)

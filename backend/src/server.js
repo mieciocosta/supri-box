@@ -6,6 +6,7 @@ const conteudos = require('./routes/conteudos');
 const usuarios = require('./routes/usuarios');
 const webhook = require('./routes/webhook');
 const pagamento = require('./routes/pagamento');
+const assinatura = require('./routes/assinatura');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/conteudos', conteudos);
 app.use('/usuarios', usuarios);
 app.use('/webhook', webhook);
 app.use('/pagamento', pagamento);
+app.use('/assinatura', assinatura);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`SupriBox rodando na porta ${PORT}`));

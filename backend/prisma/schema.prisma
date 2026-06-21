@@ -23,14 +23,17 @@ model Conteudo {
 }
 
 model Usuario {
-  id              Int       @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   nome            String?
-  whatsapp        String?   @unique
-  perfil          String    @default("adulto") // idoso | adulto | jovem
-  assinaturaAtiva Boolean   @default(false)
+  whatsapp        String?      @unique
+  email           String?
+  perfil          String       @default("adulto") // idoso | adulto | jovem
+  assinaturaAtiva Boolean      @default(false)
   assinaturaAte   DateTime?
-  createdAt       DateTime  @default(now())
+  createdAt       DateTime     @default(now())
   entregas        Entrega[]
+  assinaturas     Assinatura[]
+  pagamentos      Pagamento[]
 }
 
 model Entrega {
@@ -41,4 +44,49 @@ model Entrega {
   createdAt  DateTime @default(now())
   usuario    Usuario?  @relation(fields: [usuarioId], references: [id])
   conteudo   Conteudo  @relation(fields: [conteudoId], references: [id])
+}
+
+// Planos de assinatura. O "1 centavo" e a isca (primeira caixinha); o lucro
+// vem do plano mensal recorrente.
+model Plano {
+  id          Int          @id @default(autoincrement())
+  slug        String       @unique // isca | mensal | trimestral
+  nome        String
+  preco       Float        // em reais (ex: 0.01, 9.90)
+  periodoDias Int          @default(30)
+  destaque    String?      // texto curto pra UI
+  ativo       Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  assinaturas Assinatura[]
+}
+
+// Assinatura de um usuario a um plano. Vira "ativa" quando o pagamento
+// correspondente e aprovado pelo Mercado Pago.
+model Assinatura {
+  id         Int         @id @default(autoincrement())
+  usuarioId  Int
+  planoId    Int
+  status     String      @default("pendente") // pendente | ativa | cancelada | expirada
+  inicio     DateTime?
+  expiraEm   DateTime?
+  createdAt  DateTime    @default(now())
+  usuario    Usuario     @relation(fields: [usuarioId], references: [id])
+  plano      Plano       @relation(fields: [planoId], references: [id])
+  pagamentos Pagamento[]
+}
+
+// Registro de cada cobranca Pix. mpPaymentId liga ao pagamento no Mercado Pago.
+model Pagamento {
+  id             Int         @id @default(autoincrement())
+  usuarioId      Int?
+  assinaturaId   Int?
+  mpPaymentId    String?     @unique
+  tipo           String      @default("assinatura") // isca | assinatura | avulso
+  valor          Float
+  status         String      @default("pendente") // pendente | aprovado | rejeitado
+  qrCode         String?
+  qrCodeBase64   String?
+  createdAt      DateTime    @default(now())
+  usuario        Usuario?    @relation(fields: [usuarioId], references: [id])
+  assinatura     Assinatura? @relation(fields: [assinaturaId], references: [id])
 }

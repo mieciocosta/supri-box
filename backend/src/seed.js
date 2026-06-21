@@ -38,6 +38,13 @@ const ACERVO = [
   { tipo: 'vibe', emoji: '💪', texto: 'Dias difíceis constroem pessoas inquebráveis.', pesos: { idoso: 1, adulto: 3, jovem: 6 } },
 ];
 
+// Planos de assinatura. O "isca" de 1 centavo fisga; o lucro vem do mensal.
+const PLANOS = [
+  { slug: 'isca', nome: 'Primeira caixinha', preco: 0.01, periodoDias: 1, destaque: 'Experimente por 1 centavo' },
+  { slug: 'mensal', nome: 'Caixinha todo dia (mensal)', preco: 9.90, periodoDias: 30, destaque: 'Uma surpresa por dia no seu WhatsApp' },
+  { slug: 'trimestral', nome: 'Caixinha todo dia (3 meses)', preco: 24.90, periodoDias: 90, destaque: 'Economize levando 3 meses' },
+];
+
 async function main() {
   console.log('Limpando acervo antigo...');
   await prisma.entrega.deleteMany();
@@ -46,6 +53,15 @@ async function main() {
   console.log(`Inserindo ${ACERVO.length} caixinhas...`);
   for (const item of ACERVO) {
     await prisma.conteudo.create({ data: item });
+  }
+
+  console.log(`Sincronizando ${PLANOS.length} planos...`);
+  for (const plano of PLANOS) {
+    await prisma.plano.upsert({
+      where: { slug: plano.slug },
+      update: plano,
+      create: plano,
+    });
   }
   console.log('Seed concluido ✅');
 }
