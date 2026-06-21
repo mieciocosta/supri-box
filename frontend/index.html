@@ -6,333 +6,294 @@
 <title>SupriBox · sua dose diária de surpresa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,400;9..144,0,500;9..144,1,400;9..144,1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --night-1:#1b1230;      /* fundo profundo */
-    --night-2:#2a1a4a;
-    --gold:#e8b95e;         /* fita / brilho */
-    --gold-soft:#f6d99a;
-    --coral:#ff7a6b;        /* energia */
-    --mint:#6fe3c4;         /* serenidade fresca */
-    --cream:#f7f1e6;        /* texto claro */
-    --ink:#15102a;
-    --muted:#b9add6;
-    --card:#fbf7ef;
-    --radius:22px;
-    --ease:cubic-bezier(.22,1,.36,1);
+    --bg-0:#0e1116;
+    --bg-1:#141a22;
+    --ink:#eef1f5;
+    --muted:#929bab;
+    --faint:rgba(255,255,255,.10);
+    --surface:#f4f1ea;        /* card marfim */
+    --surface-ink:#23272f;
+    --surface-sub:#7a7264;
+    --radius:26px;
+    /* easing suave (out-expo) e mola gentil */
+    --soft:cubic-bezier(.16,1,.3,1);
+    --spring:cubic-bezier(.34,1.3,.5,1);
+    /* acento por vibe (preenchido via JS) */
+    --accent:#82b09c;
+    --accent-deep:#2c5346;
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{
-    font-family:"DM Sans",system-ui,sans-serif;
-    color:var(--cream);
-    background:
-      radial-gradient(120% 90% at 50% -10%, #3a2566 0%, var(--night-2) 38%, var(--night-1) 78%);
+    font-family:"Inter",system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--bg-0);
     min-height:100dvh;
     display:flex;flex-direction:column;align-items:center;
     overflow-x:hidden;
-    padding:max(18px,env(safe-area-inset-top)) 18px max(22px,env(safe-area-inset-bottom));
+    padding:max(20px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));
     -webkit-tap-highlight-color:transparent;
+    -webkit-font-smoothing:antialiased;
   }
 
-  /* estrelinhas ambiente */
-  .stars{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.7}
-  .stars i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:.0;
-    animation:twinkle 4s var(--ease) infinite}
-  @keyframes twinkle{0%,100%{opacity:0;transform:scale(.6)}50%{opacity:.65;transform:scale(1)}}
+  /* ---- atmosfera: aurora lenta, dessaturada ---- */
+  .aurora{position:fixed;inset:-20%;z-index:0;pointer-events:none;filter:blur(60px);opacity:.55}
+  .aurora b{position:absolute;display:block;border-radius:50%;mix-blend-mode:screen;
+    transition:background 1.2s ease}
+  .aurora .a1{width:60vw;height:60vw;left:-10vw;top:-6vh;
+    background:radial-gradient(circle, color-mix(in srgb,var(--accent) 60%,#000) 0%, transparent 66%);
+    animation:drift1 34s ease-in-out infinite}
+  .aurora .a2{width:54vw;height:54vw;right:-12vw;top:18vh;
+    background:radial-gradient(circle, #2b3553 0%, transparent 66%);
+    animation:drift2 42s ease-in-out infinite}
+  .aurora .a3{width:48vw;height:48vw;left:18vw;bottom:-14vh;
+    background:radial-gradient(circle, color-mix(in srgb,var(--accent) 30%,#3a2f25) 0%, transparent 66%);
+    animation:drift3 38s ease-in-out infinite}
+  @keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6vw,4vh) scale(1.08)}}
+  @keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-5vw,5vh) scale(1.1)}}
+  @keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(4vw,-4vh) scale(1.06)}}
 
-  /* canvas de partículas (confete/moedas) + flash de tela */
-  #fx{position:fixed;inset:0;pointer-events:none;z-index:40}
-  .flash{position:fixed;inset:0;pointer-events:none;z-index:39;opacity:0;
-    background:radial-gradient(circle at 50% 44%, #fff 0%, rgba(255,231,160,.7) 40%, transparent 72%)}
-  .flash.go{animation:flashGo .62s var(--ease)}
-  @keyframes flashGo{0%{opacity:0}10%{opacity:var(--flash,.5)}100%{opacity:0}}
+  /* grão sutil pra dar textura premium (sem peso) */
+  body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-  /* toggle de som + chip de sequência */
-  .hud-btn{position:fixed;top:max(14px,env(safe-area-inset-top));z-index:22;height:38px;
-    border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:var(--cream);
-    cursor:pointer;font-family:inherit;border-radius:999px;backdrop-filter:blur(6px);transition:.2s var(--ease)}
-  .hud-btn:active{transform:scale(.94)}
-  .snd{left:14px;width:38px;font-size:16px}
-  .streak{right:14px;display:flex;align-items:center;gap:6px;padding:0 14px;font-size:13px;font-weight:700;
-    opacity:0;transform:translateY(-8px);pointer-events:none}
-  .streak.show{opacity:1;transform:translateY(0)}
-  .streak .fire{filter:drop-shadow(0 0 7px #ff8a3d)}
-  .streak.bump{animation:bump .42s var(--ease)}
-  @keyframes bump{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(0) scale(1.28)}}
+  /* canvas de partículas (motes de luz, lentos) */
+  #fx{position:fixed;inset:0;pointer-events:none;z-index:3}
 
-  .shell{width:100%;max-width:440px;position:relative;z-index:1;
-    display:flex;flex-direction:column;flex:1;gap:22px}
+  /* botão de som discreto */
+  .snd{position:fixed;top:max(16px,env(safe-area-inset-top));right:18px;z-index:6;
+    width:36px;height:36px;border-radius:50%;border:1px solid var(--faint);
+    background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;font-size:14px;
+    display:flex;align-items:center;justify-content:center;transition:.3s var(--soft);backdrop-filter:blur(8px)}
+  .snd:hover{color:var(--ink);border-color:rgba(255,255,255,.2)}
+  .snd:active{transform:scale(.92)}
 
-  header{text-align:center;padding-top:8px}
-  .kicker{font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:600}
-  h1{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(30px,9vw,40px);
-    line-height:1.02;margin-top:8px;color:var(--cream)}
-  h1 em{font-style:italic;color:var(--gold-soft)}
-  .sub{color:var(--muted);font-size:14.5px;margin-top:10px;line-height:1.45}
+  .shell{width:100%;max-width:430px;position:relative;z-index:2;
+    display:flex;flex-direction:column;flex:1;gap:26px}
 
-  /* seletor de vibe */
-  .vibes{display:flex;gap:8px;background:rgba(255,255,255,.06);padding:6px;border-radius:16px;
-    border:1px solid rgba(255,255,255,.08)}
+  header{text-align:center;padding-top:10px}
+  .kicker{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  h1{font-family:"Fraunces",serif;font-weight:400;font-size:clamp(30px,8.4vw,38px);
+    line-height:1.08;margin-top:12px;color:var(--ink);letter-spacing:-.01em}
+  h1 em{font-style:italic;font-weight:500;color:var(--accent)}
+  .sub{color:var(--muted);font-size:14.5px;margin-top:12px;line-height:1.5;font-weight:400;
+    max-width:30ch;margin-left:auto;margin-right:auto}
+
+  /* seletor de vibe — segmented control refinado */
+  .vibes{display:flex;gap:4px;background:rgba(255,255,255,.045);padding:5px;border-radius:14px;
+    border:1px solid var(--faint)}
   .vibe{flex:1;border:0;background:transparent;color:var(--muted);font-family:inherit;
-    font-weight:600;font-size:13px;padding:11px 4px;border-radius:11px;cursor:pointer;
-    transition:.25s var(--ease);display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1}
-  .vibe span{font-size:18px}
-  .vibe small{font-size:10.5px;font-weight:500;opacity:.75;letter-spacing:.02em}
-  .vibe[aria-pressed="true"]{background:var(--cream);color:var(--ink);box-shadow:0 6px 18px rgba(0,0,0,.28)}
-  .vibe[aria-pressed="true"] small{opacity:.6}
+    font-weight:500;font-size:12.5px;padding:10px 4px;border-radius:10px;cursor:pointer;
+    transition:.4s var(--soft);display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1}
+  .vibe span{font-size:15px;opacity:.85;transition:.3s var(--soft)}
+  .vibe small{font-size:10px;font-weight:400;opacity:.6;letter-spacing:.01em}
+  .vibe[aria-pressed="true"]{background:rgba(255,255,255,.07);color:var(--ink);
+    box-shadow:0 2px 10px rgba(0,0,0,.2),inset 0 0 0 1px var(--faint)}
+  .vibe[aria-pressed="true"] span{opacity:1;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 60%,transparent))}
 
   /* palco */
   .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    position:relative;min-height:300px}
+    position:relative;min-height:320px}
 
-  /* raios de luz por trás da caixinha (sunburst) */
-  .rays{position:absolute;left:50%;top:44%;width:360px;height:360px;translate:-50% -50%;z-index:0;
-    border-radius:50%;opacity:0;transition:opacity .5s var(--ease);will-change:transform,opacity;
-    background:repeating-conic-gradient(from 0deg,
-      color-mix(in srgb,var(--accent) 38%,transparent) 0deg 7deg, transparent 7deg 20deg);
-    -webkit-mask:radial-gradient(circle, #000 0%, transparent 66%);
-            mask:radial-gradient(circle, #000 0%, transparent 66%);
-    animation:spin 14s linear infinite}
-  .box-wrap.charging ~ .rays{opacity:.45}
-  .stage.revealed .rays{opacity:.6}
-  @keyframes spin{to{transform:rotate(360deg)}}
+  /* bloom de luz no centro (suave, sem flash) */
+  .bloom{position:absolute;left:50%;top:44%;width:min(440px,92vw);aspect-ratio:1;translate:-50% -50%;
+    border-radius:50%;pointer-events:none;opacity:0;filter:blur(10px);
+    background:radial-gradient(circle, color-mix(in srgb,var(--accent) 42%,#fff 14%) 0%,
+      color-mix(in srgb,var(--accent) 22%,transparent) 38%, transparent 64%)}
+  .bloom.go{animation:bloom 1.5s var(--soft)}
+  @keyframes bloom{0%{opacity:0;transform:translate(-50%,-50%) scale(.45)}
+    28%{opacity:.55}100%{opacity:0;transform:translate(-50%,-50%) scale(1.15)}}
 
-  /* a caixinha */
-  .box-wrap{position:relative;width:172px;height:160px;cursor:pointer;z-index:2;
-    animation:float 4.5s ease-in-out infinite}
-  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-  .glow{position:absolute;inset:-40% -30%;border-radius:50%;z-index:0;
-    background:radial-gradient(circle, color-mix(in srgb,var(--accent) 60%, transparent) 0%, transparent 62%);
-    filter:blur(14px);opacity:.55;transition:.4s var(--ease)}
-  .box{position:absolute;left:26px;bottom:0;width:120px;height:96px;border-radius:10px;z-index:2;
-    background:linear-gradient(160deg,#fdfaf3,#ece2cf);
-    box-shadow:0 22px 40px -14px rgba(0,0,0,.55), inset 0 -8px 14px rgba(0,0,0,.06)}
-  .box::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:22px;transform:translateX(-50%);
-    background:linear-gradient(var(--accent),color-mix(in srgb,var(--accent) 70%,#000 8%))}
-  .lid{position:absolute;left:18px;top:34px;width:136px;height:40px;border-radius:9px;z-index:3;
-    background:linear-gradient(160deg,#fffdf8,#f0e7d6);
-    box-shadow:0 10px 22px -8px rgba(0,0,0,.5);
-    transition:transform .55s var(--ease),opacity .5s var(--ease);transform-origin:center bottom}
-  .lid::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:24px;transform:translateX(-50%);
-    background:linear-gradient(var(--accent),color-mix(in srgb,var(--accent) 70%,#000 8%))}
-  .bow{position:absolute;left:50%;top:18px;width:54px;height:34px;transform:translateX(-50%);z-index:4;
-    transition:transform .55s var(--ease),opacity .45s var(--ease)}
-  .bow::before,.bow::after{content:"";position:absolute;top:0;width:26px;height:34px;
-    border-radius:60% 60% 50% 50%;background:var(--accent);
-    box-shadow:inset 0 -6px 8px rgba(0,0,0,.12)}
-  .bow::before{left:0;transform:rotate(-22deg)}
-  .bow::after{right:0;transform:rotate(22deg)}
+  /* o orbe (respira) */
+  .orb{position:relative;width:148px;height:148px;border:0;background:none;padding:0;cursor:pointer;
+    z-index:2;animation:breathe 5.6s ease-in-out infinite;will-change:transform}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+  .orb-core{position:absolute;inset:0;border-radius:50%;
+    background:
+      radial-gradient(circle at 36% 32%, #ffffff 0%, color-mix(in srgb,var(--accent) 30%,#fff) 16%,
+        var(--accent) 52%, color-mix(in srgb,var(--accent) 64%,#000 36%) 100%);
+    box-shadow:
+      0 26px 60px -18px color-mix(in srgb,var(--accent) 65%,transparent),
+      inset 0 -14px 28px rgba(0,0,0,.22),
+      inset 0 10px 22px rgba(255,255,255,.45);
+    transition:transform .6s var(--soft),opacity .6s var(--soft)}
+  .orb-core::after{content:"";position:absolute;left:30%;top:20%;width:30%;height:22%;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.9),transparent 70%);filter:blur(2px)}
+  .orb-halo{position:absolute;inset:-46%;border-radius:50%;z-index:-1;
+    background:radial-gradient(circle, color-mix(in srgb,var(--accent) 44%,transparent) 0%, transparent 62%);
+    filter:blur(16px);opacity:.55;transition:.7s var(--soft)}
+  .orb-ring{position:absolute;inset:-16px;border-radius:50%;
+    border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);opacity:.45;
+    transition:.7s var(--soft)}
+  .orb:focus-visible{outline:none}
+  .orb:focus-visible .orb-ring{opacity:.9;inset:-20px}
 
-  .tap-hint{margin-top:26px;color:var(--muted);font-size:13.5px;letter-spacing:.04em;
-    display:flex;align-items:center;gap:7px;z-index:2}
-  .tap-hint b{color:var(--cream);font-weight:600}
+  .orb.opening{animation:inhale .52s var(--soft) forwards}
+  @keyframes inhale{0%{transform:scale(1.02)}100%{transform:scale(.9)}}
+  .orb.open .orb-core{transform:scale(1.55);opacity:0}
+  .orb.open .orb-halo{opacity:0;inset:-80%}
+  .orb.open .orb-ring{opacity:0;transform:scale(1.6)}
 
-  /* carregando a surpresa (suspense) */
-  .box-wrap.charging{animation:charge .8s var(--ease)}
-  @keyframes charge{
-    0%{transform:translateY(0) scale(1) rotate(0)}
-    30%{transform:translateY(-2px) scale(1.05) rotate(-3deg)}
-    45%{transform:translateY(-2px) scale(1.06) rotate(3deg)}
-    60%{transform:translateY(-3px) scale(1.07) rotate(-3deg)}
-    75%{transform:translateY(-3px) scale(1.08) rotate(3deg)}
-    100%{transform:translateY(-6px) scale(1.12) rotate(0)}}
-  .box-wrap.charging .glow{opacity:1;inset:-70% -55%}
-
-  /* estados de abertura */
-  .box-wrap.open .lid{transform:translateY(-78px) rotate(-12deg);opacity:0}
-  .box-wrap.open .bow{transform:translate(-50%,-96px) scale(.6);opacity:0}
-  .box-wrap.open .glow{opacity:1;inset:-80% -65%}
-  .box-wrap.open{animation:popOut .5s var(--ease)}
-  @keyframes popOut{0%{transform:scale(1.12)}45%{transform:scale(.9)}100%{transform:scale(1)}}
+  .hint{margin-top:30px;color:var(--muted);font-size:13px;letter-spacing:.03em;font-weight:400;
+    transition:opacity .5s var(--soft);z-index:2}
+  .hint.gone{opacity:0}
 
   /* card revelado */
-  .reveal{position:relative;z-index:5;width:100%;max-width:360px;background:var(--card);color:var(--ink);
-    border-radius:var(--radius);padding:30px 28px 28px;text-align:center;overflow:hidden;
-    box-shadow:0 30px 70px -22px rgba(0,0,0,.6);
-    opacity:0;transform:translateY(26px) scale(.96);pointer-events:none;
-    transition:opacity .5s var(--ease) .12s, transform .6s var(--ease) .12s, box-shadow .5s var(--ease);
-    display:none}
+  .reveal{position:relative;z-index:4;width:100%;max-width:354px;background:var(--surface);
+    color:var(--surface-ink);border-radius:var(--radius);padding:36px 30px 32px;text-align:center;
+    overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.7),0 2px 0 rgba(255,255,255,.5) inset;
+    opacity:0;transform:translateY(30px) scale(.97);pointer-events:none;display:none}
   .reveal.show{display:block;opacity:1;transform:translateY(0) scale(1);pointer-events:auto;
-    animation:cardPop .6s var(--ease)}
-  @keyframes cardPop{0%{transform:translateY(26px) scale(.9)}60%{transform:translateY(0) scale(1.03)}100%{transform:translateY(0) scale(1)}}
-  /* brilho que varre o card */
-  .reveal::after{content:"";position:absolute;inset:0;pointer-events:none;
-    background:linear-gradient(120deg,transparent 32%,rgba(255,255,255,.55) 50%,transparent 68%);
-    transform:translateX(-130%)}
-  .reveal.show::after{animation:sweep 1.05s var(--ease) .28s}
-  @keyframes sweep{to{transform:translateX(130%)}}
+    animation:rise .9s var(--spring)}
+  @keyframes rise{0%{opacity:0;transform:translateY(34px) scale(.95)}100%{opacity:1;transform:translateY(0) scale(1)}}
+  /* leve respiração de luz no card especial */
+  .reveal.rich{box-shadow:0 40px 90px -28px rgba(0,0,0,.7),
+    0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent),
+    0 0 60px -10px color-mix(in srgb,var(--accent) 45%,transparent)}
 
-  .reveal .rarity{display:none;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
-    font-weight:800;padding:6px 13px;border-radius:999px;margin-bottom:12px}
-  .reveal.r-especial .rarity{display:inline-flex;background:#e7f7f0;color:#0e7a59}
-  .reveal.r-raro .rarity{display:inline-flex;background:linear-gradient(90deg,#fff0c2,#ffdf86);color:#8a5810}
-  .reveal.r-lendario .rarity{display:inline-flex;color:#7a4e06;
-    background:linear-gradient(90deg,#ffe9a8,#ffd54a,#ffe9a8);
-    box-shadow:0 0 0 1px rgba(255,213,74,.6),0 8px 22px -6px rgba(255,200,60,.7)}
+  .reveal .tag{display:inline-block;font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;
+    font-weight:600;color:var(--surface-sub);margin-bottom:18px}
+  .reveal .tag::before{content:"";display:inline-block;width:14px;height:1px;
+    background:var(--accent);vertical-align:middle;margin-right:8px;opacity:.8}
+  .reveal .tag::after{content:"";display:inline-block;width:14px;height:1px;
+    background:var(--accent);vertical-align:middle;margin-left:8px;opacity:.8}
+  .reveal .emoji{font-size:42px;display:none;margin-bottom:16px;filter:saturate(.85)}
+  .reveal .body{font-family:"Fraunces",serif;font-size:25px;line-height:1.38;font-weight:400;
+    color:var(--surface-ink);letter-spacing:-.005em}
+  .reveal.tipo-frase .body{font-family:"Inter",sans-serif;font-weight:600;font-size:22px;line-height:1.4;letter-spacing:-.01em}
+  .reveal.tipo-vibe .body{font-family:"Fraunces",serif;font-style:italic;font-weight:500}
+  .reveal .ref{margin-top:20px;font-size:12.5px;font-weight:500;color:var(--surface-sub);letter-spacing:.02em}
 
-  .reveal .tag{display:inline-block;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
-    font-weight:700;color:var(--accent-ink);background:color-mix(in srgb,var(--accent) 18%,#fff);
-    padding:6px 12px;border-radius:20px;margin-bottom:16px}
-  .reveal .body{font-family:"Fraunces",serif;font-size:24px;line-height:1.34;font-weight:500;color:#241a3d}
-  .reveal.tipo-frase .body{font-family:"DM Sans",sans-serif;font-weight:700;font-size:23px;line-height:1.3}
-  .reveal.tipo-vibe{background:linear-gradient(150deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#7b3ff2))}
-  .reveal.tipo-vibe .body,.reveal.tipo-vibe .ref{color:#fff}
-  .reveal.tipo-vibe .tag{background:rgba(255,255,255,.22);color:#fff}
-  .reveal .emoji{font-size:48px;display:block;margin-bottom:14px}
-  .reveal .ref{margin-top:16px;font-size:13px;font-weight:600;color:#6b5f86;letter-spacing:.02em}
+  .actions{display:flex;flex-direction:column;align-items:center;gap:12px;z-index:2}
+  .btn{border:0;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer;
+    padding:16px 26px;border-radius:15px;width:100%;max-width:354px;transition:.35s var(--soft);letter-spacing:.01em}
+  .btn-primary{background:var(--ink);color:#15181d;box-shadow:0 12px 30px -12px rgba(0,0,0,.6)}
+  .btn-primary:hover{transform:translateY(-1px)}
+  .btn-primary:active{transform:translateY(1px)}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--faint)}
+  .btn-ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.22)}
+  .btn-ghost:active{transform:translateY(1px)}
 
-  /* glow por raridade no card */
-  .reveal.r-raro{box-shadow:0 30px 70px -22px rgba(0,0,0,.6),0 0 46px -6px var(--accent)}
-  .reveal.r-lendario{animation:cardPop .6s var(--ease),legGlow 1.7s ease-in-out .6s infinite alternate}
-  @keyframes legGlow{
-    from{box-shadow:0 30px 80px -20px rgba(0,0,0,.6),0 0 42px -8px #ffd54a,0 0 0 2px rgba(255,213,74,.45)}
-    to{box-shadow:0 32px 92px -18px rgba(0,0,0,.6),0 0 82px 0 #ffd54a,0 0 0 2px rgba(255,213,74,.85)}}
-
-  .actions{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:4px;z-index:2}
-  .btn{border:0;font-family:inherit;font-weight:700;font-size:16px;cursor:pointer;
-    padding:16px 26px;border-radius:16px;width:100%;max-width:360px;transition:.2s var(--ease)}
-  .btn-primary{background:var(--accent);color:var(--ink);box-shadow:0 14px 30px -10px color-mix(in srgb,var(--accent) 70%,transparent)}
-  .btn-primary:active{transform:translateY(2px)}
-  .btn-ghost{background:transparent;color:var(--cream);border:1px solid rgba(255,255,255,.16);max-width:360px}
-  .btn-ghost:active{transform:translateY(2px)}
-  /* "abrir outra" pulsando, convidando o próximo open */
-  #againBtn{animation:invite 2.2s var(--ease) infinite}
-  @keyframes invite{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}50%{box-shadow:0 0 0 4px rgba(255,255,255,.06)}}
-
-  footer{text-align:center;color:var(--muted);font-size:13px;line-height:1.5;padding-top:4px;z-index:2}
-  footer b{color:var(--gold-soft);font-weight:600}
-  .wa{color:var(--mint);text-decoration:none;font-weight:600}
-
-  /* toast de marco (sequência) */
-  .toast{position:fixed;left:50%;top:24%;translate:-50% 0;z-index:45;pointer-events:none;
-    font-weight:800;font-size:15px;color:#3a2a06;padding:13px 20px;border-radius:16px;white-space:nowrap;
-    background:linear-gradient(90deg,#ffe49a,#ffd24a);box-shadow:0 18px 40px -12px rgba(255,190,40,.7);
-    opacity:0}
-  .toast.show{animation:toastPop 1.9s var(--ease)}
-  @keyframes toastPop{0%{opacity:0;transform:translate(-50%,14px) scale(.8)}
-    14%{opacity:1;transform:translate(-50%,0) scale(1.04)}24%{transform:translate(-50%,0) scale(1)}
-    80%{opacity:1}100%{opacity:0;transform:translate(-50%,-10px) scale(.96)}}
+  footer{text-align:center;color:var(--muted);font-size:13px;line-height:1.6;padding-top:2px;z-index:2}
+  footer b{color:var(--ink);font-weight:500}
+  .wa{color:var(--accent);text-decoration:none;font-weight:500}
+  .wa:hover{text-decoration:underline}
 
   @media (prefers-reduced-motion: reduce){
-    .box-wrap,.stars i,.rays,#againBtn,.reveal.r-lendario{animation:none!important}
-    .reveal{transition:opacity .2s linear}
+    .orb,.aurora b{animation:none!important}
     .reveal.show{animation:none}
-    .box-wrap.open .lid,.box-wrap.open .bow{transition:opacity .2s linear}
-    .reveal.show::after{animation:none}
+    .bloom.go{animation:none}
+    .orb.opening{animation:none}
   }
 
   /* ===== modal de assinatura ===== */
-  .overlay{position:fixed;inset:0;z-index:50;background:rgba(10,6,24,.72);
-    backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;
-    padding:0;opacity:0;transition:opacity .3s var(--ease)}
+  .overlay{position:fixed;inset:0;z-index:50;background:rgba(8,10,14,.66);
+    backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center;
+    opacity:0;transition:opacity .4s var(--soft)}
   .overlay.show{display:flex;opacity:1}
-  .sheet{width:100%;max-width:460px;background:linear-gradient(180deg,#241738,#1b1230);
-    border-radius:26px 26px 0 0;border:1px solid rgba(255,255,255,.08);border-bottom:0;
-    padding:24px 22px max(26px,env(safe-area-inset-bottom));color:var(--cream);
-    box-shadow:0 -30px 80px -20px rgba(0,0,0,.7);
-    transform:translateY(100%);transition:transform .42s var(--ease);max-height:92dvh;overflow-y:auto}
+  .sheet{width:100%;max-width:460px;background:linear-gradient(180deg,#1a212b,#11161d);
+    border-radius:28px 28px 0 0;border:1px solid var(--faint);border-bottom:0;
+    padding:26px 24px max(28px,env(safe-area-inset-bottom));color:var(--ink);
+    box-shadow:0 -30px 90px -24px rgba(0,0,0,.7);
+    transform:translateY(100%);transition:transform .5s var(--spring);max-height:92dvh;overflow-y:auto}
   .overlay.show .sheet{transform:translateY(0)}
-  .sheet .grab{width:42px;height:5px;border-radius:3px;background:rgba(255,255,255,.2);margin:0 auto 16px}
-  .sheet h2{font-family:"Fraunces",serif;font-weight:600;font-size:24px;text-align:center;line-height:1.1}
-  .sheet .lead{color:var(--muted);font-size:14px;text-align:center;margin-top:8px;line-height:1.45}
-  .field{margin-top:16px}
-  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.02em}
-  .field input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
-    border-radius:13px;padding:13px 14px;color:var(--cream);font-family:inherit;font-size:15px;outline:none;
-    transition:.2s var(--ease)}
-  .field input:focus{border-color:var(--gold);background:rgba(255,255,255,.09)}
-  .plan-pick{display:flex;flex-direction:column;gap:9px;margin-top:8px}
-  .pick{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
-    background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;
-    padding:13px 15px;color:var(--cream);font-family:inherit;transition:.2s var(--ease)}
-  .pick[aria-pressed="true"]{border-color:var(--gold);background:rgba(232,185,94,.12)}
-  .pick .ic{font-size:22px;line-height:1}
+  .sheet .grab{width:40px;height:4px;border-radius:3px;background:rgba(255,255,255,.18);margin:0 auto 20px}
+  .sheet h2{font-family:"Fraunces",serif;font-weight:400;font-size:24px;text-align:center;line-height:1.15}
+  .sheet .lead{color:var(--muted);font-size:14px;text-align:center;margin-top:10px;line-height:1.5}
+  .field{margin-top:18px}
+  .field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:7px;letter-spacing:.02em}
+  .field input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--faint);
+    border-radius:13px;padding:14px;color:var(--ink);font-family:inherit;font-size:15px;outline:none;
+    transition:.3s var(--soft)}
+  .field input:focus{border-color:var(--accent);background:rgba(255,255,255,.08)}
+  .plan-pick{display:flex;flex-direction:column;gap:9px;margin-top:9px}
+  .pick{display:flex;align-items:center;gap:13px;width:100%;text-align:left;cursor:pointer;
+    background:rgba(255,255,255,.04);border:1px solid var(--faint);border-radius:14px;
+    padding:14px 16px;color:var(--ink);font-family:inherit;transition:.3s var(--soft)}
+  .pick[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+  .pick .ic{font-size:20px;line-height:1;opacity:.9}
   .pick .t{flex:1}
-  .pick .t b{display:block;font-size:15px;font-weight:600}
-  .pick .t small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
-  .pick .price{font-family:"Fraunces",serif;font-weight:600;font-size:18px;color:var(--gold-soft)}
-  .row-perfil{display:flex;gap:9px;margin-top:8px}
-  .row-perfil .pick{flex-direction:column;align-items:center;text-align:center;gap:5px;padding:12px 6px}
-  .msg{font-size:13px;text-align:center;margin-top:12px;color:#ff9d90;min-height:18px}
-  .sheet .btn{margin-top:18px}
+  .pick .t b{display:block;font-size:14.5px;font-weight:600}
+  .pick .t small{display:block;font-size:12px;color:var(--muted);margin-top:2px;font-weight:400}
+  .pick .price{font-family:"Fraunces",serif;font-weight:500;font-size:18px;color:var(--accent)}
+  .row-perfil{display:flex;gap:9px;margin-top:9px}
+  .row-perfil .pick{flex-direction:column;align-items:center;text-align:center;gap:6px;padding:13px 6px}
+  .msg{font-size:13px;text-align:center;margin-top:13px;color:#e89a8c;min-height:18px}
+  .sheet .btn{margin-top:20px;background:var(--accent);color:#14181d}
   .sheet .btn:disabled{opacity:.5;cursor:not-allowed}
-  .link-min{display:block;text-align:center;margin-top:14px;color:var(--muted);font-size:13px;
-    background:none;border:0;width:100%;cursor:pointer;font-family:inherit}
+  .link-min{display:block;text-align:center;margin-top:15px;color:var(--muted);font-size:13px;
+    background:none;border:0;width:100%;cursor:pointer;font-family:inherit;transition:.3s var(--soft)}
+  .link-min:hover{color:var(--ink)}
 
-  /* etapa pix */
   .pix-box{margin-top:8px;text-align:center}
-  .pix-box img{width:208px;height:208px;border-radius:16px;background:#fff;padding:10px;margin:6px auto 0;display:block}
-  .pix-amount{font-family:"Fraunces",serif;font-size:30px;color:var(--gold-soft);margin:6px 0 2px}
+  .pix-box img{width:208px;height:208px;border-radius:16px;background:#fff;padding:10px;margin:8px auto 0;display:block}
+  .pix-amount{font-family:"Fraunces",serif;font-size:30px;color:var(--accent);margin:8px 0 2px}
   .pix-plan{color:var(--muted);font-size:13px;margin-bottom:6px}
-  .copia{display:flex;gap:8px;margin-top:14px}
-  .copia input{flex:1;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:12px;
-    padding:12px;color:var(--cream);font-size:12px;font-family:ui-monospace,monospace;overflow:hidden;text-overflow:ellipsis}
-  .copia button{border:0;border-radius:12px;padding:0 16px;font-weight:700;font-family:inherit;cursor:pointer;
-    background:var(--gold);color:var(--ink)}
-  .await{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;color:var(--muted);font-size:13.5px}
-  .spinner{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.18);border-top-color:var(--gold);
+  .copia{display:flex;gap:8px;margin-top:16px}
+  .copia input{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--faint);border-radius:12px;
+    padding:13px;color:var(--ink);font-size:12px;font-family:ui-monospace,monospace;overflow:hidden;text-overflow:ellipsis}
+  .copia button{border:0;border-radius:12px;padding:0 17px;font-weight:600;font-family:inherit;cursor:pointer;
+    background:var(--accent);color:#14181d}
+  .await{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:18px;color:var(--muted);font-size:13.5px}
+  .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.16);border-top-color:var(--accent);
     border-radius:50%;animation:spin 1s linear infinite}
-  .ok-emoji{font-size:54px;text-align:center;margin:6px 0 4px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ok-emoji{font-size:50px;text-align:center;margin:6px 0 6px}
   .hidden{display:none!important}
 </style>
 </head>
 <body data-vibe="serenidade">
-  <div class="stars" id="stars" aria-hidden="true"></div>
+  <div class="aurora" aria-hidden="true"><b class="a1"></b><b class="a2"></b><b class="a3"></b></div>
   <canvas id="fx" aria-hidden="true"></canvas>
-  <div class="flash" id="flash" aria-hidden="true"></div>
-  <div class="toast" id="toast" aria-hidden="true"></div>
-
-  <button class="hud-btn snd" id="snd" aria-label="Ligar/desligar som">🔊</button>
-  <div class="hud-btn streak" id="streak" aria-live="polite"><span class="fire">🔥</span><span id="streakN">0</span> seguidas</div>
+  <button class="snd" id="snd" aria-label="Ligar ou desligar o som">♪</button>
 
   <div class="shell">
     <header>
       <div class="kicker">SupriBox</div>
-      <h1>Uma <em>surpresa</em><br>boa por dia</h1>
-      <p class="sub">Escolha sua vibe e abra. Cada caixinha guarda algo feito pra te levantar.</p>
+      <h1>Uma <em>surpresa</em> boa<br>todo dia</h1>
+      <p class="sub">Escolha a sua vibe e toque para revelar a mensagem feita pra hoje.</p>
     </header>
 
     <div class="vibes" role="group" aria-label="Escolha a vibe">
       <button class="vibe" data-vibe="serenidade" aria-pressed="true">
-        <span>🕊️</span>Serenidade<small>versículos & paz</small>
+        <span>☾</span>Serenidade<small>versículos & paz</small>
       </button>
       <button class="vibe" data-vibe="equilibrio" aria-pressed="false">
-        <span>🌿</span>Dia a dia<small>equilíbrio</small>
+        <span>◐</span>Dia a dia<small>equilíbrio</small>
       </button>
       <button class="vibe" data-vibe="energia" aria-pressed="false">
-        <span>⚡</span>Energia<small>frases & vibe</small>
+        <span>✦</span>Energia<small>frases & foco</small>
       </button>
     </div>
 
     <div class="stage" id="stage">
-      <div class="box-wrap" id="box" role="button" tabindex="0" aria-label="Abrir caixinha">
-        <div class="glow"></div>
-        <div class="box"></div>
-        <div class="lid"></div>
-        <div class="bow"></div>
-      </div>
-      <div class="rays" aria-hidden="true"></div>
-      <div class="tap-hint" id="hint">toque na caixinha · <b>é surpresa ✨</b></div>
+      <div class="bloom" id="bloom" aria-hidden="true"></div>
+      <button class="orb" id="orb" aria-label="Tocar para revelar a caixinha">
+        <span class="orb-halo"></span>
+        <span class="orb-ring"></span>
+        <span class="orb-core"></span>
+      </button>
+      <div class="hint" id="hint">toque para revelar</div>
 
       <div class="reveal" id="reveal" aria-live="polite">
-        <span class="rarity" id="rRar"></span>
         <span class="tag" id="rTag">Versículo</span>
-        <span class="emoji" id="rEmoji" style="display:none"></span>
+        <span class="emoji" id="rEmoji"></span>
         <div class="body" id="rBody"></div>
         <div class="ref" id="rRef"></div>
       </div>
     </div>
 
     <div class="actions">
-      <button class="btn btn-primary" id="openBtn">Abrir caixinha</button>
-      <button class="btn btn-ghost" id="againBtn" style="display:none">Abrir outra ✨</button>
+      <button class="btn btn-primary" id="openBtn">Revelar a caixinha</button>
+      <button class="btn btn-ghost" id="againBtn" style="display:none">Revelar outra</button>
     </div>
 
     <footer>
-      Gostou? <b>Receba sua caixinha todo dia</b> direto no
+      <b>Receba todo dia</b>, direto no
       <a class="wa" href="#" id="wa">WhatsApp →</a>
     </footer>
   </div>
@@ -342,10 +303,9 @@
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
       <div class="grab"></div>
 
-      <!-- etapa 1: formulario -->
       <div id="stepForm">
-        <h2 id="sheetTitle">Sua caixinha todo dia ✨</h2>
-        <p class="lead">A primeira sai por <b>1 centavo</b>. Depois é uma surpresa por dia no seu WhatsApp.</p>
+        <h2 id="sheetTitle">Sua caixinha todo dia</h2>
+        <p class="lead">A primeira sai por <b>1 centavo</b>. Depois, uma mensagem por dia no seu WhatsApp.</p>
 
         <div class="field">
           <label for="fNome">Seu nome</label>
@@ -359,25 +319,24 @@
         <div class="field">
           <label>Qual a vibe pra essa pessoa?</label>
           <div class="row-perfil" id="perfilPick">
-            <button type="button" class="pick" data-perfil="idoso" aria-pressed="false"><span class="ic">🕊️</span><span class="t"><b>Serenidade</b></span></button>
-            <button type="button" class="pick" data-perfil="adulto" aria-pressed="true"><span class="ic">🌿</span><span class="t"><b>Dia a dia</b></span></button>
-            <button type="button" class="pick" data-perfil="jovem" aria-pressed="false"><span class="ic">⚡</span><span class="t"><b>Energia</b></span></button>
+            <button type="button" class="pick" data-perfil="idoso" aria-pressed="false"><span class="ic">☾</span><span class="t"><b>Serenidade</b></span></button>
+            <button type="button" class="pick" data-perfil="adulto" aria-pressed="true"><span class="ic">◐</span><span class="t"><b>Dia a dia</b></span></button>
+            <button type="button" class="pick" data-perfil="jovem" aria-pressed="false"><span class="ic">✦</span><span class="t"><b>Energia</b></span></button>
           </div>
         </div>
 
         <div class="field">
           <label>Escolha o plano</label>
-          <div class="plan-pick" id="planPick"><!-- preenchido via JS --></div>
+          <div class="plan-pick" id="planPick"></div>
         </div>
 
         <div class="msg" id="formMsg"></div>
-        <button class="btn btn-primary" id="goPix">Gerar meu Pix</button>
+        <button class="btn" id="goPix">Gerar meu Pix</button>
         <button class="link-min" id="closeForm">Agora não</button>
       </div>
 
-      <!-- etapa 2: pix -->
       <div id="stepPix" class="hidden">
-        <h2>Quase lá! 💛</h2>
+        <h2>Quase lá</h2>
         <p class="lead">Pague o Pix abaixo. A confirmação é automática.</p>
         <div class="pix-box">
           <div class="pix-amount" id="pixAmount">R$ 0,01</div>
@@ -389,48 +348,38 @@
           <button id="pixCopy">Copiar</button>
         </div>
         <div class="await" id="pixAwait"><span class="spinner"></span> Aguardando seu pagamento…</div>
-        <button class="btn btn-primary hidden" id="confirmStub">Já paguei (teste)</button>
+        <button class="btn hidden" id="confirmStub">Já paguei (teste)</button>
         <button class="link-min" id="closePix">Fechar</button>
       </div>
 
-      <!-- etapa 3: sucesso -->
       <div id="stepOk" class="hidden">
-        <div class="ok-emoji">🎉</div>
-        <h2>Assinatura ativa!</h2>
-        <p class="lead">A partir de amanhã sua caixinha surpresa chega todo dia no WhatsApp. Pode fechar e aproveitar. 💛</p>
-        <button class="btn btn-primary" id="okDone">Fechar</button>
+        <div class="ok-emoji">✶</div>
+        <h2>Assinatura ativa</h2>
+        <p class="lead">A partir de amanhã sua mensagem chega todo dia no WhatsApp. Pode fechar e aproveitar.</p>
+        <button class="btn" id="okDone">Fechar</button>
       </div>
     </div>
   </div>
 
 <script>
 /* ============================================================
-   CONFIG — aponte para o backend pra puxar do banco real.
-   Deixe vazio ("") pra rodar 100% offline com o acervo local.
+   CONFIG — backend na mesma origem (servido pelo Express) ou via
+   API_BASE. file:// roda 100% offline com o acervo local.
 ============================================================ */
-const API_BASE = ""; // ex: "https://caixinha-backend.up.railway.app"
-
-/* Quando o frontend e servido pelo proprio backend (Railway), usa a mesma
-   origem (chamadas relativas). Abrindo o arquivo direto (file://), roda offline. */
+const API_BASE = "";
 const USE_API = Boolean(API_BASE) || location.protocol.startsWith("http");
 
-/* mapa vibe(UI) -> perfil(motor) */
 const PERFIL = { serenidade:"idoso", equilibrio:"adulto", energia:"jovem" };
 
-/* paleta de acento por vibe */
+/* acento por vibe — paleta dessaturada, premium */
 const ACENTO = {
-  serenidade:{accent:"#6fe3c4", ink:"#0f5446"},
-  equilibrio:{accent:"#e8b95e", ink:"#7a5410"},
-  energia:{accent:"#ff7a6b", ink:"#8a2a1f"}
+  serenidade:{ accent:"#82b09c", deep:"#27433a" },  // eucalipto
+  equilibrio:{ accent:"#c9a77d", deep:"#4a3a26" },  // areia
+  energia:   {  accent:"#d98c74", deep:"#4d2f26" }  // terracota
 };
 
-/* ------------------------------------------------------------
-   ACERVO LOCAL (demo offline). Os pesos definem a chance por
-   perfil: {idoso, adulto, jovem}. 0 = não aparece pra aquele perfil.
-   No backend isso vem do banco (seed.js) e é fácil de expandir.
------------------------------------------------------------- */
+/* acervo local (demo offline) */
 const ACERVO = [
-  // versículos (domínio público) — fortes pra "serenidade"
   {tipo:"versiculo", texto:"O Senhor é o meu pastor; nada me faltará.", ref:"Salmos 23:1", pesos:{idoso:6,adulto:3,jovem:1}},
   {tipo:"versiculo", texto:"Tudo posso naquele que me fortalece.", ref:"Filipenses 4:13", pesos:{idoso:5,adulto:4,jovem:3}},
   {tipo:"versiculo", texto:"O choro pode durar uma noite, mas a alegria vem pela manhã.", ref:"Salmos 30:5", pesos:{idoso:6,adulto:3,jovem:1}},
@@ -438,23 +387,19 @@ const ACERVO = [
   {tipo:"versiculo", texto:"Não temas, porque eu sou contigo.", ref:"Isaías 41:10", pesos:{idoso:6,adulto:4,jovem:2}},
   {tipo:"versiculo", texto:"A tua palavra é lâmpada para os meus pés e luz para o meu caminho.", ref:"Salmos 119:105", pesos:{idoso:5,adulto:3,jovem:1}},
   {tipo:"versiculo", texto:"Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará.", ref:"Salmos 37:5", pesos:{idoso:5,adulto:4,jovem:2}},
-  // carinho / bom dia — serenidade + equilíbrio
   {tipo:"frase", texto:"Bom dia. Que hoje seja leve e cheio de pequenas alegrias.", ref:"", pesos:{idoso:5,adulto:3,jovem:1}},
   {tipo:"frase", texto:"Você é mais forte do que imagina e mais amado do que pensa.", ref:"", pesos:{idoso:4,adulto:4,jovem:3}},
-  // frases motivacionais (originais) — fortes pra "energia"
   {tipo:"frase", texto:"Você não precisa ter tudo pronto pra começar. Só precisa começar.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
   {tipo:"frase", texto:"Sua única competição é a pessoa que você foi ontem.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
   {tipo:"frase", texto:"Coragem não é ausência de medo. É seguir mesmo sentindo ele.", ref:"", pesos:{idoso:2,adulto:5,jovem:5}},
   {tipo:"frase", texto:"Disciplina é amor próprio em forma de hábito.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
   {tipo:"frase", texto:"Respira. Você já superou 100% dos seus piores dias.", ref:"", pesos:{idoso:2,adulto:5,jovem:6}},
-  // "vibe" — card vibrante com emoji, exclusivo pra galera jovem
-  {tipo:"vibe", emoji:"🚀", texto:"Modo foco ativado. Hoje é dia de avançar.", ref:"", pesos:{idoso:0,adulto:2,jovem:6}},
-  {tipo:"vibe", emoji:"🔥", texto:"Some o orgulho do depois. Faz o que tem que ser feito agora.", ref:"", pesos:{idoso:0,adulto:2,jovem:6}},
-  {tipo:"vibe", emoji:"🌱", texto:"Plante hoje a sombra onde você vai descansar amanhã.", ref:"", pesos:{idoso:1,adulto:3,jovem:5}},
-  {tipo:"vibe", emoji:"💪", texto:"Dias difíceis constroem pessoas inquebráveis.", ref:"", pesos:{idoso:1,adulto:3,jovem:6}}
+  {tipo:"vibe", emoji:"↗", texto:"Modo foco ativado. Hoje é dia de avançar.", ref:"", pesos:{idoso:0,adulto:2,jovem:6}},
+  {tipo:"vibe", emoji:"✦", texto:"Some o orgulho do depois. Faça o que precisa ser feito agora.", ref:"", pesos:{idoso:0,adulto:2,jovem:6}},
+  {tipo:"vibe", emoji:"❖", texto:"Plante hoje a sombra onde você vai descansar amanhã.", ref:"", pesos:{idoso:1,adulto:3,jovem:5}},
+  {tipo:"vibe", emoji:"◆", texto:"Dias difíceis constroem pessoas inquebráveis.", ref:"", pesos:{idoso:1,adulto:3,jovem:6}}
 ];
 
-/* sorteio ponderado por perfil, evitando repetir o último */
 let ultimoTexto = null;
 function sortearLocal(perfil){
   const elegiveis = ACERVO.filter(c => (c.pesos[perfil]||0) > 0 && c.texto !== ultimoTexto);
@@ -464,167 +409,140 @@ function sortearLocal(perfil){
   for(const c of pool){ r -= c.pesos[perfil]; if(r<=0){ ultimoTexto=c.texto; return c; } }
   return pool[0];
 }
-
 async function sortear(perfil){
   if(USE_API){
-    try{
-      const res = await fetch(`${API_BASE}/caixinha?perfil=${perfil}`);
-      if(res.ok) return await res.json();
-    }catch(e){ /* cai pro acervo local */ }
+    try{ const res = await fetch(`${API_BASE}/caixinha?perfil=${perfil}`); if(res.ok) return await res.json(); }
+    catch(e){}
   }
   return sortearLocal(perfil);
 }
 
-/* ============================================================
-   RECOMPENSA VARIÁVEL — o que vicia (do bem).
-   Cada abertura tem uma RARIDADE sorteada. Quanto mais rara,
-   maior a festa: confete, moedas, flash, som e vibração. A maioria
-   é "comum" e limpa — de vez em quando vem uma LENDÁRIA dourada.
-============================================================ */
-const RAR = {
-  comum:    { p:62, cls:"r-comum",    label:"",               confete:24,  moedas:0,  flash:0,    notas:[523.25,659.25],                         vib:[14] },
-  especial: { p:26, cls:"r-especial", label:"✦ Especial",     confete:46,  moedas:0,  flash:.22,  notas:[523.25,659.25,783.99],                  vib:[18,40,18] },
-  raro:     { p:9,  cls:"r-raro",     label:"✦✦ Raro",        confete:80,  moedas:16, flash:.5,   notas:[523.25,659.25,783.99,1046.5],           vib:[26,40,26,40,60] },
-  lendario: { p:3,  cls:"r-lendario", label:"✦✦✦ Lendária",   confete:150, moedas:48, flash:.9,   notas:[523.25,659.25,783.99,1046.5,1318.5],    vib:[10,28,10,28,10,28,150] }
-};
-function rollRaridade(){
-  let r = Math.random()*100;
-  for(const k of ["comum","especial","raro","lendario"]){ r -= RAR[k].p; if(r<=0) return k; }
-  return "comum";
-}
-
 const motionOK = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
-const PALETA = ["#f6d99a","#ffffff","#ff7a6b","#6fe3c4","#e8b95e","#ffd54a","#c9a7ff"];
-const OURO   = ["#ffd54a","#f6d99a","#e8b95e","#fff3cf","#ffbf3d"];
 
-/* ---------- ÁUDIO (WebAudio, sem assets) ---------- */
-let actx=null;
+/* ============================================================
+   ÁUDIO — pads quentes com reverb (WebAudio, sem assets).
+   Nada de bipe de arcade: ataque lento, filtro suave, espaço.
+============================================================ */
+let actx=null, master=null, echo=null;
 let muted = localStorage.getItem("sb_mute")==="1";
-function audioCtx(){
-  if(!actx){ const AC = window.AudioContext||window.webkitAudioContext; if(AC) actx = new AC(); }
-  if(actx && actx.state==="suspended") actx.resume();
+function aud(){
+  if(!actx){
+    const AC = window.AudioContext||window.webkitAudioContext; if(!AC) return null;
+    actx = new AC();
+    master = actx.createGain(); master.gain.value=0.85; master.connect(actx.destination);
+    // ambiência: delay com realimentação suave (pseudo-reverb)
+    echo = actx.createDelay(); echo.delayTime.value=0.21;
+    const fb = actx.createGain(); fb.gain.value=0.32;
+    const tone = actx.createBiquadFilter(); tone.type="lowpass"; tone.frequency.value=1800;
+    const wet = actx.createGain(); wet.gain.value=0.3;
+    echo.connect(tone); tone.connect(fb); fb.connect(echo); tone.connect(wet); wet.connect(master);
+  }
+  if(actx.state==="suspended") actx.resume();
   return actx;
 }
-function tone(freq, start, dur, type="triangle", vol=.18){
-  const a=audioCtx(); if(!a) return;
-  const o=a.createOscillator(), g=a.createGain();
-  o.type=type; o.frequency.value=freq;
-  g.gain.setValueAtTime(0.0001, start);
-  g.gain.linearRampToValueAtTime(vol, start+0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
-  o.connect(g).connect(a.destination); o.start(start); o.stop(start+dur+0.02);
+function voz(freq, t, {dur=1.8, type="sine", vol=.12, detune=0, attack=.28}={}){
+  const o=actx.createOscillator(), g=actx.createGain(), lp=actx.createBiquadFilter();
+  o.type=type; o.frequency.value=freq; o.detune.value=detune;
+  lp.type="lowpass"; lp.frequency.value=2400;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(vol,t+attack);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(lp); lp.connect(g); g.connect(master); g.connect(echo);
+  o.start(t); o.stop(t+dur+0.05);
 }
-function somCarga(){
-  if(muted) return; const a=audioCtx(); if(!a) return;
-  const t=a.currentTime, o=a.createOscillator(), g=a.createGain();
-  o.type="sine";
-  o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(620,t+.68);
-  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(.12,t+.12);
-  g.gain.exponentialRampToValueAtTime(0.0001,t+.72);
-  o.connect(g).connect(a.destination); o.start(t); o.stop(t+.74);
+/* abrir: respiração — ruído filtrado em swell + grave sutil */
+function somAbrir(){
+  if(muted) return; const a=aud(); if(!a) return; const t=a.currentTime;
+  const buf=a.createBuffer(1, Math.floor(a.sampleRate*0.9), a.sampleRate);
+  const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*0.4;
+  const src=a.createBufferSource(); src.buffer=buf;
+  const bp=a.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=520; bp.Q.value=0.6;
+  const g=a.createGain();
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(.045,t+.32); g.gain.exponentialRampToValueAtTime(0.0001,t+.85);
+  src.connect(bp); bp.connect(g); g.connect(master);
+  src.start(t); src.stop(t+.9);
+  voz(110, t, {dur:.85, type:"sine", vol:.05, attack:.3});
 }
-function somPremio(rar){
-  if(muted) return; const a=audioCtx(); if(!a) return;
-  const t=a.currentTime, notas=RAR[rar].notas;
-  notas.forEach((f,i)=> tone(f, t+i*0.085, .5, "triangle", .17));
-  if(rar==="lendario"){ tone(1568, t+notas.length*0.085, .7, "sine", .14); } // brilho final
+/* revelar: acorde quente (Cmaj add9), vozes levemente desafinadas */
+function somRevelar(rich){
+  if(muted) return; const a=aud(); if(!a) return; const t=a.currentTime;
+  const acorde = rich ? [261.63,329.63,392.00,587.33] : [261.63,329.63,392.00];
+  acorde.forEach((f,i)=> voz(f, t+i*0.07, {dur:2.0, type:"sine", vol:.11, detune:(i%2?7:-7)}));
+  if(rich) voz(1046.50, t+0.04, {dur:1.6, type:"triangle", vol:.045, attack:.015});
 }
 
-/* ---------- VIBRAÇÃO ---------- */
-function vibrar(p){ if(navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } }
-
-/* ---------- CANVAS de partículas (confete + moedas) ---------- */
-const fx = document.getElementById("fx"), fxc = fx.getContext("2d");
-let parts=[], raf=null, DPR=Math.min(window.devicePixelRatio||1, 2);
+/* ============================================================
+   PARTÍCULAS — motes de luz lentos (sobem e se dissolvem).
+============================================================ */
+const fx=document.getElementById("fx"), fxc=fx.getContext("2d");
+let parts=[], raf=null, DPR=Math.min(window.devicePixelRatio||1,2);
 function sizeFx(){ fx.width=innerWidth*DPR; fx.height=innerHeight*DPR; fxc.setTransform(DPR,0,0,DPR,0,0); }
 sizeFx(); addEventListener("resize", sizeFx);
+function accentRGB(){
+  const c=getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  return c||"#82b09c";
+}
 function loop(){
   fxc.clearRect(0,0,innerWidth,innerHeight);
   for(const p of parts){
-    p.vy += p.g; p.vx *= .992; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
-    const o = Math.max(0, Math.min(1, p.life/12));
-    fxc.save(); fxc.globalAlpha=o; fxc.translate(p.x,p.y); fxc.rotate(p.rot);
+    p.x+=p.vx; p.y+=p.vy; p.vy*=.992; p.life--;
+    const k=Math.max(0,Math.min(1,p.life/p.max));
+    const a=Math.sin(k*Math.PI)*p.alpha; // surge e some
+    fxc.beginPath();
     fxc.fillStyle=p.color;
-    if(p.coin){
-      fxc.beginPath(); fxc.ellipse(0,0,p.s,p.s*Math.abs(Math.cos(p.rot))*.7+p.s*.3,0,0,7); fxc.fill();
-    } else {
-      fxc.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);
-    }
-    fxc.restore();
+    fxc.globalAlpha=a;
+    fxc.shadowBlur=p.r*3; fxc.shadowColor=p.color;
+    fxc.arc(p.x,p.y,p.r,0,7); fxc.fill();
   }
-  parts = parts.filter(p=> p.life>0 && p.y < innerHeight+60);
-  if(parts.length) raf=requestAnimationFrame(loop);
-  else { raf=null; fxc.clearRect(0,0,innerWidth,innerHeight); }
+  fxc.globalAlpha=1; fxc.shadowBlur=0;
+  parts=parts.filter(p=>p.life>0);
+  if(parts.length) raf=requestAnimationFrame(loop); else raf=null;
 }
 function go(){ if(!raf) raf=requestAnimationFrame(loop); }
-function confete(n, palette, power){
-  n = Math.round(n * (motionOK ? 1 : 0.3));
-  const ox=innerWidth*0.5, oy=innerHeight*0.46;
+function motes(n){
+  if(!motionOK) n=Math.round(n*0.4);
+  const ox=innerWidth*0.5, oy=innerHeight*0.44, col=accentRGB();
   for(let i=0;i<n;i++){
-    const ang=Math.random()*Math.PI*2, sp=power*(0.4+Math.random());
-    parts.push({ x:ox, y:oy, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp-power*0.5,
-      g:0.16+Math.random()*0.06, s:6+Math.random()*7, rot:Math.random()*7, vr:(Math.random()-.5)*0.5,
-      color:palette[i%palette.length], life:70+Math.random()*40, coin:false });
-  }
-  go();
-}
-function moedas(n){
-  n = Math.round(n * (motionOK ? 1 : 0.3));
-  for(let i=0;i<n;i++){
-    parts.push({ x:Math.random()*innerWidth, y:-20-Math.random()*innerHeight*0.4,
-      vx:(Math.random()-.5)*1.2, vy:2+Math.random()*2, g:0.14+Math.random()*0.05,
-      s:7+Math.random()*5, rot:Math.random()*7, vr:(Math.random()-.5)*0.6,
-      color:OURO[i%OURO.length], life:120+Math.random()*60, coin:true });
+    const ang=-Math.PI/2 + (Math.random()-.5)*1.6, sp=0.3+Math.random()*0.9, max=120+Math.random()*90;
+    parts.push({
+      x:ox+(Math.random()-.5)*60, y:oy+(Math.random()-.5)*40,
+      vx:Math.cos(ang)*sp*0.5, vy:Math.sin(ang)*sp - 0.25,
+      r:1.4+Math.random()*2.6, alpha:0.5+Math.random()*0.4,
+      color: Math.random()<0.5 ? col : "#fff",
+      life:max, max:max
+    });
   }
   go();
 }
 
-/* ---------- flash de tela ---------- */
-const flashEl=document.getElementById("flash");
-function flash(intensidade){
-  if(!motionOK || intensidade<=0) return;
-  flashEl.style.setProperty("--flash", intensidade);
-  flashEl.classList.remove("go"); void flashEl.offsetWidth; flashEl.classList.add("go");
-}
-
-/* ---------- sequência (streak) ---------- */
-const streakEl=document.getElementById("streak"), streakN=document.getElementById("streakN");
-const toastEl=document.getElementById("toast");
-let streak=0;
-function toast(txt){
-  toastEl.textContent=txt; toastEl.classList.remove("show"); void toastEl.offsetWidth; toastEl.classList.add("show");
-}
-function bumpStreak(){
-  streak++;
-  streakN.textContent=streak;
-  streakEl.classList.add("show");
-  streakEl.classList.remove("bump"); void streakEl.offsetWidth; streakEl.classList.add("bump");
-  if([5,10,20,50].includes(streak)){ toast(`🔥 ${streak} seguidas!`); flash(.4); confete(60, PALETA, 9); vibrar([20,40,60]); }
-}
-
-/* ---------- UI ---------- */
-const body=document.body, box=document.getElementById("box"), stage=document.getElementById("stage");
+/* ============================================================
+   UI
+============================================================ */
+const bloomEl=document.getElementById("bloom");
+const orb=document.getElementById("orb"), stage=document.getElementById("stage");
 const reveal=document.getElementById("reveal"), hint=document.getElementById("hint");
 const openBtn=document.getElementById("openBtn"), againBtn=document.getElementById("againBtn");
 const rTag=document.getElementById("rTag"), rBody=document.getElementById("rBody"),
-      rRef=document.getElementById("rRef"), rEmoji=document.getElementById("rEmoji"), rRar=document.getElementById("rRar");
+      rRef=document.getElementById("rRef"), rEmoji=document.getElementById("rEmoji");
 let vibeAtual="serenidade", abrindo=false;
 
-/* som toggle */
 const sndBtn=document.getElementById("snd");
-sndBtn.textContent = muted ? "🔇" : "🔊";
+sndBtn.style.opacity = muted ? .5 : 1;
+sndBtn.textContent = muted ? "♪̸" : "♪";
 sndBtn.addEventListener("click",()=>{
   muted=!muted; localStorage.setItem("sb_mute", muted?"1":"0");
-  sndBtn.textContent = muted ? "🔇" : "🔊";
-  if(!muted){ audioCtx(); tone(659.25, (actx?actx.currentTime:0)+0.001, .25, "triangle", .15); }
+  sndBtn.style.opacity = muted ? .5 : 1;
+  sndBtn.textContent = muted ? "♪̸" : "♪";
+  if(!muted){ const a=aud(); if(a) voz(392, a.currentTime+0.001, {dur:1.1, vol:.08}); }
 });
 
 function aplicarAcento(v){
   const a=ACENTO[v];
-  document.documentElement.style.setProperty("--accent",a.accent);
-  document.documentElement.style.setProperty("--accent-ink",a.ink);
-  body.dataset.vibe=v;
+  const root=document.documentElement.style;
+  root.setProperty("--accent",a.accent);
+  root.setProperty("--accent-deep",a.deep);
+  document.body.dataset.vibe=v;
 }
 aplicarAcento(vibeAtual);
 
@@ -637,99 +555,77 @@ document.querySelectorAll(".vibe").forEach(btn=>{
   });
 });
 
-const TAGS={versiculo:"Versículo",frase:"Frase",vibe:"Vibe do dia"};
+const TAGS={versiculo:"Versículo",frase:"Frase",vibe:"Foco do dia"};
 
 async function abrir(){
-  if(abrindo) return; abrindo=true;
-  openBtn.disabled=true;
-  audioCtx(); // destrava o áudio dentro do gesto do usuário
+  if(abrindo) return; abrindo=true; openBtn.disabled=true; aud();
 
   const item = await sortear(PERFIL[vibeAtual]);
-  const rar  = rollRaridade();
+  const rich = Math.random() < 0.18; // momento sutilmente mais rico (sem rótulo)
 
-  // 1) SUSPENSE — carrega a surpresa
-  box.classList.add("charging");
-  somCarga(); vibrar([8]);
-  await wait(motionOK ? 760 : 80);
-  box.classList.remove("charging");
+  // 1) inspira
+  orb.classList.add("opening");
+  somAbrir(); if(navigator.vibrate) try{navigator.vibrate(8)}catch(e){}
+  await wait(motionOK ? 520 : 60);
 
-  // 2) ESTOURO — abre, flash, partículas, som, vibração (escala com a raridade)
-  box.classList.add("open");
-  stage.classList.add("revealed");
-  const cfg = RAR[rar];
-  flash(cfg.flash);
-  confete(cfg.confete, rar==="lendario" ? OURO : PALETA, rar==="comum" ? 7 : rar==="especial" ? 8.5 : 11);
-  if(cfg.moedas) moedas(cfg.moedas);
-  somPremio(rar);
-  vibrar(cfg.vib);
+  // 2) floresce — orbe se dissolve, luz suave, motes sobem
+  orb.classList.remove("opening"); orb.classList.add("open");
+  bloomEl.classList.remove("go"); void bloomEl.offsetWidth; bloomEl.classList.add("go");
+  motes(rich ? 24 : 15);
+  somRevelar(rich);
+  if(navigator.vibrate) try{navigator.vibrate(rich?[10,40,12]:[10])}catch(e){}
+  hint.classList.add("gone");
 
-  await wait(motionOK ? 200 : 40);
+  await wait(motionOK ? 300 : 50);
 
-  // 3) REVELAÇÃO
-  reveal.className = "reveal tipo-"+item.tipo+" "+cfg.cls+" show";
-  if(cfg.label){ rRar.textContent=cfg.label; } else { rRar.textContent=""; }
-  rTag.textContent = TAGS[item.tipo]||"Surpresa";
+  // 3) revela
+  reveal.className = "reveal tipo-"+item.tipo+(rich?" rich":"")+" show";
+  rTag.textContent = TAGS[item.tipo]||"Mensagem";
   rBody.textContent = item.texto;
-  if(item.emoji){ rEmoji.style.display="block"; rEmoji.textContent=item.emoji; }
-  else rEmoji.style.display="none";
-  if(item.ref){ rRef.style.display="block"; rRef.textContent="— "+item.ref; }
-  else rRef.style.display="none";
-  hint.style.visibility="hidden";
+  if(item.emoji){ rEmoji.style.display="block"; rEmoji.textContent=item.emoji; } else rEmoji.style.display="none";
+  if(item.ref){ rRef.style.display="block"; rRef.textContent="— "+item.ref; } else rRef.style.display="none";
   openBtn.style.display="none"; againBtn.style.display="block";
 
-  bumpStreak();
   abrindo=false; openBtn.disabled=false;
 }
 
 function resetar(){
-  box.classList.remove("open","charging");
-  stage.classList.remove("revealed");
+  orb.classList.remove("open","opening");
   reveal.className="reveal";
-  hint.style.visibility="visible";
+  hint.classList.remove("gone");
   openBtn.style.display="block"; openBtn.disabled=false;
   againBtn.style.display="none";
   abrindo=false;
 }
 
 openBtn.addEventListener("click",abrir);
-againBtn.addEventListener("click",()=>{ resetar(); setTimeout(abrir,120); });
-box.addEventListener("click",()=>{ if(!box.classList.contains("open") && !abrindo) abrir(); });
-box.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();abrir();} });
+againBtn.addEventListener("click",()=>{ resetar(); setTimeout(abrir,160); });
+orb.addEventListener("click",()=>{ if(!orb.classList.contains("open") && !abrindo) abrir(); });
 
 /* ============================================================
-   ASSINATURA — fluxo Pix recorrente.
-   Com backend ativo: abre o modal, gera Pix e confirma sozinho
-   (polling). Sem backend (file://): cai pro link do WhatsApp.
+   ASSINATURA — fluxo Pix (igual ao backend já no ar).
 ============================================================ */
 const WA_FALLBACK = "https://wa.me/5598984221002?text=" +
-  encodeURIComponent("Quero receber minha caixinha todo dia ✨");
+  encodeURIComponent("Quero receber minha caixinha todo dia");
 
-const overlay   = document.getElementById("overlay");
-const stepForm  = document.getElementById("stepForm");
-const stepPix   = document.getElementById("stepPix");
-const stepOk    = document.getElementById("stepOk");
-const planPick  = document.getElementById("planPick");
-const perfilPick= document.getElementById("perfilPick");
-const formMsg   = document.getElementById("formMsg");
-const goPix     = document.getElementById("goPix");
+const overlay=document.getElementById("overlay");
+const stepForm=document.getElementById("stepForm"), stepPix=document.getElementById("stepPix"), stepOk=document.getElementById("stepOk");
+const planPick=document.getElementById("planPick"), perfilPick=document.getElementById("perfilPick");
+const formMsg=document.getElementById("formMsg"), goPix=document.getElementById("goPix");
 
-let perfilSel = "adulto";
-let planoSel  = null;
-let planosCache = [];
-let pollTimer = null;
+let perfilSel="adulto", planoSel=null, planosCache=[], pollTimer=null;
 
 const PLANOS_FALLBACK = [
   { slug:"isca",       nome:"Primeira caixinha",            preco:0.01, destaque:"Experimente por 1 centavo" },
-  { slug:"mensal",     nome:"Caixinha todo dia (mensal)",   preco:9.90, destaque:"Uma surpresa por dia no WhatsApp" },
+  { slug:"mensal",     nome:"Caixinha todo dia (mensal)",   preco:9.90, destaque:"Uma mensagem por dia no WhatsApp" },
   { slug:"trimestral", nome:"Caixinha todo dia (3 meses)",  preco:24.90,destaque:"Economize levando 3 meses" }
 ];
-const PLANO_ICON = { isca:"🎁", mensal:"📦", trimestral:"💎" };
+const PLANO_ICON = { isca:"✶", mensal:"❖", trimestral:"◆" };
 const fmtBRL = (v)=> "R$ " + Number(v).toFixed(2).replace(".", ",");
 
 function abrirModal(){
   if(!USE_API){ window.open(WA_FALLBACK,"_blank"); return; }
-  mostrarEtapa("form");
-  carregarPlanos();
+  mostrarEtapa("form"); carregarPlanos();
   overlay.classList.add("show"); overlay.setAttribute("aria-hidden","false");
 }
 function fecharModal(){
@@ -741,23 +637,20 @@ function mostrarEtapa(e){
   stepPix.classList.toggle("hidden",  e!=="pix");
   stepOk.classList.toggle("hidden",   e!=="ok");
 }
-
 async function carregarPlanos(){
   if(planosCache.length){ renderPlanos(); return; }
-  try{
-    const r = await fetch(`${API_BASE}/assinatura/planos`);
-    planosCache = r.ok ? await r.json() : PLANOS_FALLBACK;
-  }catch(e){ planosCache = PLANOS_FALLBACK; }
+  try{ const r=await fetch(`${API_BASE}/assinatura/planos`); planosCache = r.ok ? await r.json() : PLANOS_FALLBACK; }
+  catch(e){ planosCache = PLANOS_FALLBACK; }
   renderPlanos();
 }
 function renderPlanos(){
-  planPick.innerHTML = "";
+  planPick.innerHTML="";
   planosCache.forEach((p,i)=>{
-    const b = document.createElement("button");
+    const b=document.createElement("button");
     b.type="button"; b.className="pick"; b.dataset.slug=p.slug;
-    b.setAttribute("aria-pressed", i===0 ? "true" : "false");
-    if(i===0) planoSel = p.slug;
-    b.innerHTML = `<span class="ic">${PLANO_ICON[p.slug]||"📦"}</span>
+    b.setAttribute("aria-pressed", i===0?"true":"false");
+    if(i===0) planoSel=p.slug;
+    b.innerHTML=`<span class="ic">${PLANO_ICON[p.slug]||"❖"}</span>
       <span class="t"><b>${p.nome}</b><small>${p.destaque||""}</small></span>
       <span class="price">${fmtBRL(p.preco)}</span>`;
     b.addEventListener("click",()=>{
@@ -767,92 +660,69 @@ function renderPlanos(){
     planPick.appendChild(b);
   });
 }
-
 perfilPick.querySelectorAll(".pick").forEach(b=>{
   b.addEventListener("click",()=>{
     perfilPick.querySelectorAll(".pick").forEach(x=>x.setAttribute("aria-pressed","false"));
     b.setAttribute("aria-pressed","true"); perfilSel=b.dataset.perfil;
   });
 });
-
 async function gerarPix(){
-  const nome  = document.getElementById("fNome").value.trim();
-  const whats = document.getElementById("fWhats").value.replace(/\D/g,"");
+  const nome=document.getElementById("fNome").value.trim();
+  const whats=document.getElementById("fWhats").value.replace(/\D/g,"");
   formMsg.textContent="";
-  if(whats.length < 10){ formMsg.textContent="Coloque um WhatsApp válido com DDD."; return; }
+  if(whats.length<10){ formMsg.textContent="Coloque um WhatsApp válido com DDD."; return; }
   if(!planoSel){ formMsg.textContent="Escolha um plano."; return; }
-
   goPix.disabled=true; goPix.textContent="Gerando…";
   try{
-    const r = await fetch(`${API_BASE}/assinatura/criar`,{
+    const r=await fetch(`${API_BASE}/assinatura/criar`,{
       method:"POST", headers:{"Content-Type":"application/json"},
       body:JSON.stringify({ nome, whatsapp:whats, perfil:perfilSel, planoSlug:planoSel })
     });
-    const data = await r.json();
+    const data=await r.json();
     if(!r.ok){ formMsg.textContent=data.erro||"Falha ao gerar o Pix."; return; }
     mostrarPix(data);
-  }catch(e){
-    formMsg.textContent="Sem conexão com o servidor. Tente de novo.";
-  }finally{
-    goPix.disabled=false; goPix.textContent="Gerar meu Pix";
-  }
+  }catch(e){ formMsg.textContent="Sem conexão com o servidor. Tente de novo."; }
+  finally{ goPix.disabled=false; goPix.textContent="Gerar meu Pix"; }
 }
-
 function mostrarPix(data){
-  document.getElementById("pixAmount").textContent = fmtBRL(data.valor);
-  document.getElementById("pixPlan").textContent   = data.plano?.nome || "";
-  document.getElementById("pixCode").value         = data.qrCode || "";
-  const qr = document.getElementById("pixQr");
-  if(data.qrCodeBase64){ qr.src = "data:image/png;base64,"+data.qrCodeBase64; qr.classList.remove("hidden"); }
+  document.getElementById("pixAmount").textContent=fmtBRL(data.valor);
+  document.getElementById("pixPlan").textContent=data.plano?.nome||"";
+  document.getElementById("pixCode").value=data.qrCode||"";
+  const qr=document.getElementById("pixQr");
+  if(data.qrCodeBase64){ qr.src="data:image/png;base64,"+data.qrCodeBase64; qr.classList.remove("hidden"); }
   else qr.classList.add("hidden");
-  // em modo stub o backend nao tem como receber o Pix real -> botao de teste
   document.getElementById("confirmStub").classList.toggle("hidden", !data.stub);
-  mostrarEtapa("pix");
-  iniciarPolling(data.assinaturaId);
+  mostrarEtapa("pix"); iniciarPolling(data.assinaturaId);
 }
-
 function iniciarPolling(assinaturaId){
   if(pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(async ()=>{
+  pollTimer=setInterval(async ()=>{
     try{
-      const r = await fetch(`${API_BASE}/assinatura/${assinaturaId}/status`);
+      const r=await fetch(`${API_BASE}/assinatura/${assinaturaId}/status`);
       if(!r.ok) return;
-      const s = await r.json();
+      const s=await r.json();
       if(s.status==="ativa"){
         clearInterval(pollTimer); pollTimer=null;
-        mostrarEtapa("ok");
-        // festa de confirmação
-        flash(.6); confete(120, OURO, 11); moedas(40); somPremio("lendario"); vibrar([20,40,20,40,120]);
+        mostrarEtapa("ok"); motes(26); somRevelar(true);
       }
-    }catch(e){ /* tenta de novo no proximo tick */ }
+    }catch(e){}
   }, 3000);
-  document.getElementById("confirmStub").onclick = async ()=>{
+  document.getElementById("confirmStub").onclick=async ()=>{
     await fetch(`${API_BASE}/assinatura/${assinaturaId}/confirmar-stub`,{method:"POST"});
   };
 }
-
 document.getElementById("pixCopy").addEventListener("click",()=>{
   const inp=document.getElementById("pixCode");
   navigator.clipboard?.writeText(inp.value);
   const b=document.getElementById("pixCopy"); const t=b.textContent;
   b.textContent="Copiado!"; setTimeout(()=>b.textContent=t,1500);
 });
-
 document.getElementById("wa").addEventListener("click",e=>{ e.preventDefault(); abrirModal(); });
 goPix.addEventListener("click",gerarPix);
 document.getElementById("closeForm").addEventListener("click",fecharModal);
 document.getElementById("closePix").addEventListener("click",fecharModal);
 document.getElementById("okDone").addEventListener("click",fecharModal);
 overlay.addEventListener("click",e=>{ if(e.target===overlay) fecharModal(); });
-
-/* estrelinhas */
-const starsEl=document.getElementById("stars");
-for(let i=0;i<26;i++){
-  const s=document.createElement("i");
-  s.style.left=Math.random()*100+"%"; s.style.top=Math.random()*100+"%";
-  s.style.animationDelay=Math.random()*4+"s";
-  starsEl.appendChild(s);
-}
 </script>
 </body>
 </html>
