@@ -50,12 +50,16 @@ npm run dev                 # sobe em http://localhost:3000
 
 Frontend: abra `frontend/index.html` no navegador (roda offline). Pra conectar no banco, edite `API_BASE` no topo do `<script>` com a URL do backend.
 
-## Deploy (Railway)
+## Deploy (Railway) — um serviço só
 
-1. New Project → Deploy from GitHub → `mieciocosta/supri-box`, root `/backend`.
-2. Add PostgreSQL → `DATABASE_URL` é injetada sozinha.
-3. Start command: `npx prisma db push && npm run seed && npm start`.
-4. Frontend: publique `frontend/` como site estático (Vercel/Netlify) e aponte `API_BASE` pro backend.
+O backend serve o frontend na mesma URL, então é **um único serviço** e **uma URL** pra testar. Já vem com `railway.json` e o `package.json` raiz prontos.
+
+1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → escolha `mieciocosta/supri-box` (branch `claude/optimistic-mccarthy-xnxg24`). Deixe o **root** no padrão (raiz do repo).
+2. No projeto → **New** → **Database** → **Add PostgreSQL**. O Railway injeta `DATABASE_URL` sozinho no serviço.
+3. No serviço web → aba **Settings** → **Networking** → **Generate Domain**. Pronto: acesse a URL gerada e a caixinha + assinatura já funcionam.
+4. (Opcional, pra cobrar de verdade) Variables → `MP_ACCESS_TOKEN` (Mercado Pago) e `ZAPI_INSTANCE/ZAPI_TOKEN/ZAPI_CLIENT_TOKEN` (WhatsApp). Sem eles, roda em modo stub (Pix de teste + WhatsApp no log).
+
+> Build/seed automáticos: o boot roda `prisma db push` + um **seed idempotente** (`seedSafe.js`, que não apaga nada) e sobe o servidor. Healthcheck em `/health`.
 
 ## Assinatura via Pix (o que fatura)
 

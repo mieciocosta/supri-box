@@ -1,0 +1,10 @@
+{
+  "name": "supri-box",
+  "version": "1.0.0",
+  "description": "SupriBox - caixinhas surpresa segmentadas por perfil. Deploy num servico so (backend serve o frontend).",
+  "private": true,
+  "scripts": {
+    "postinstall": "cd backend && npm install && npx prisma generate",
+    "start": "cd backend && npx prisma db push --accept-data-loss && node src/seedSafe.js && npm start"
+  }
+}

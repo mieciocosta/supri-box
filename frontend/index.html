@@ -330,6 +330,10 @@
 ============================================================ */
 const API_BASE = ""; // ex: "https://caixinha-backend.up.railway.app"
 
+/* Quando o frontend e servido pelo proprio backend (Railway), usa a mesma
+   origem (chamadas relativas). Abrindo o arquivo direto (file://), roda offline. */
+const USE_API = Boolean(API_BASE) || location.protocol.startsWith("http");
+
 /* mapa vibe(UI) -> perfil(motor) */
 const PERFIL = { serenidade:"idoso", equilibrio:"adulto", energia:"jovem" };
 
@@ -382,7 +386,7 @@ function sortearLocal(perfil){
 }
 
 async function sortear(perfil){
-  if(API_BASE){
+  if(USE_API){
     try{
       const res = await fetch(`${API_BASE}/caixinha?perfil=${perfil}`);
       if(res.ok) return await res.json();
@@ -498,7 +502,7 @@ const PLANO_ICON = { isca:"🎁", mensal:"📦", trimestral:"💎" };
 const fmtBRL = (v)=> "R$ " + Number(v).toFixed(2).replace(".", ",");
 
 function abrirModal(){
-  if(!API_BASE){ window.open(WA_FALLBACK,"_blank"); return; }
+  if(!USE_API){ window.open(WA_FALLBACK,"_blank"); return; }
   mostrarEtapa("form");
   carregarPlanos();
   overlay.classList.add("show"); overlay.setAttribute("aria-hidden","false");
