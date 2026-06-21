@@ -12,6 +12,7 @@ datasource db {
 model Conteudo {
   id         Int       @id @default(autoincrement())
   tipo       String    // versiculo | frase | vibe | imagem | gif
+  categoria  String    @default("fe") // fe|foco|forca|sabedoria|gratidao|calma|amor
   texto      String
   explicacao String?   // breve explicacao calorosa da mensagem
   referencia String?   // ex: "Salmos 23:1" ou autor

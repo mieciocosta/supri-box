@@ -53,25 +53,48 @@ const WHITE       = [255,255,255];
 // padding: fracao do raio do orbe (maskable precisa de mais respiro)
 function render(N, orbFrac) {
   const buf = Buffer.alloc(N * N * 4);
-  const cx = N * 0.5, cy = N * 0.46, R = N * orbFrac;
-  const hx = cx - R * 0.34, hy = cy - R * 0.38; // brilho especular
+  const cx = N * 0.5, cy = N * 0.47, R = N * orbFrac;
+  const hx = cx - R * 0.34, hy = cy - R * 0.40;     // brilho especular
+  const ringR = R * 1.18, ringW = Math.max(1.3, R * 0.05);
+  const deco = N >= 160;                             // anel/faiscas so em tamanhos maiores
+  const GLINT = mix(ACCENT_LT, WHITE, 0.5);
+  // faiscas ao redor (eco das particulas de luz do app) — dao vida/dopamina
+  const sparks = deco ? [
+    { a: -0.6, d: 1.34, s: 0.085 }, { a: -2.3, d: 1.50, s: 0.060 },
+    { a: 0.7, d: 1.52, s: 0.055 }, { a: 2.5, d: 1.32, s: 0.070 }, { a: 1.7, d: 1.58, s: 0.045 },
+  ].map((p) => ({ x: cx + Math.cos(p.a) * R * p.d, y: cy + Math.sin(p.a) * R * p.d, r: R * p.s })) : [];
+
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
-      // fundo (gradiente vertical)
       let col = mix(BG_TOP, BG_BOT, y / N);
       const dx = x - cx, dy = y - cy, dist = Math.hypot(dx, dy);
+      // brilho atmosferico centrado no orbe (profundidade)
+      col = mix(col, ACCENT, (1 - smooth(0, R * 2.6, dist)) * 0.20);
       // halo externo suave
-      const halo = (1 - smooth(R * 0.9, R * 2.0, dist)) * 0.5;
-      if (halo > 0 && dist > R) col = mix(col, ACCENT, halo * 0.35);
+      if (dist > R) col = mix(col, ACCENT, (1 - smooth(R * 0.9, R * 2.0, dist)) * 0.30);
+      // anel luminoso fino ao redor do orbe
+      if (deco && dist > R) {
+        const ring = 1 - Math.min(1, Math.abs(dist - ringR) / ringW);
+        if (ring > 0) col = mix(col, GLINT, ring * 0.45);
+      }
+      // faiscas
+      for (const sp of sparks) {
+        const sd = Math.hypot(x - sp.x, y - sp.y);
+        const v = Math.pow(1 - Math.min(1, sd / sp.r), 2);
+        if (v > 0) col = mix(col, GLINT, v * 0.9);
+      }
       // corpo do orbe
       if (dist < R + 1.5) {
         const t = Math.min(1, dist / R);
-        let body = mix(ACCENT_LT, ACCENT, Math.pow(t, 0.7));
-        body = mix(body, ACCENT_DK, smooth(0.55, 1.0, t)); // escurece a borda
+        let body = mix(ACCENT_LT, ACCENT, Math.pow(t, 0.65));
+        body = mix(body, ACCENT_DK, smooth(0.5, 1.0, t));     // escurece a borda
+        // rim light quente vindo de baixo (volume premium)
+        const rim = Math.pow(smooth(0.6, 1.0, t), 1.5) * Math.max(0, dy / R) * 0.5;
+        body = mix(body, ACCENT_LT, Math.min(0.5, rim));
         const hd = Math.hypot(x - hx, y - hy);
-        const spec = Math.pow(1 - Math.min(1, hd / (R * 0.85)), 2) * 0.85; // brilho
+        const spec = Math.pow(1 - Math.min(1, hd / (R * 0.82)), 2.2) * 0.95; // brilho especular
         body = mix(body, WHITE, spec);
-        const cover = 1 - smooth(R - 1.2, R + 1.2, dist); // anti-alias da borda
+        const cover = 1 - smooth(R - 1.2, R + 1.2, dist);     // anti-alias da borda
         col = mix(col, body, cover);
       }
       const i = (y * N + x) * 4;

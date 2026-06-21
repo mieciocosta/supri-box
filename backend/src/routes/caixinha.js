@@ -6,9 +6,9 @@ const router = express.Router();
 
 const PERFIS = ['idoso', 'adulto', 'jovem'];
 
-// GET /caixinha?perfil=jovem&whatsapp=559... 
-// Abre uma caixinha: sorteia 1 conteudo pro perfil, evita repetir o que o
-// usuario viu nas ultimas entregas e registra a entrega.
+// GET /caixinha?perfil=jovem&categoria=fe&whatsapp=559...
+// Abre uma caixinha: sorteia 1 conteudo (filtrando por categoria, se vier),
+// evita repetir o que o usuario viu nas ultimas entregas e registra a entrega.
 router.get('/', async (req, res) => {
   try {
     let perfil = (req.query.perfil || 'adulto').toLowerCase();
@@ -16,6 +16,8 @@ router.get('/', async (req, res) => {
 
     const whatsapp = req.query.whatsapp || null;
     const canal = req.query.canal || 'web';
+    const CATEGORIAS = ['fe', 'foco', 'forca', 'sabedoria', 'gratidao', 'calma', 'amor'];
+    const categoria = String(req.query.categoria || '').toLowerCase();
 
     // resolve usuario (opcional)
     let usuario = null;
@@ -35,7 +37,9 @@ router.get('/', async (req, res) => {
       excluir = recentes.map((e) => e.conteudoId);
     }
 
-    const itens = await prisma.conteudo.findMany({ where: { ativo: true } });
+    const where = { ativo: true };
+    if (CATEGORIAS.includes(categoria)) where.categoria = categoria;
+    const itens = await prisma.conteudo.findMany({ where });
     const escolhido = sortear(itens, perfil, excluir);
 
     if (!escolhido) {
@@ -48,6 +52,7 @@ router.get('/', async (req, res) => {
 
     res.json({
       tipo: escolhido.tipo,
+      categoria: escolhido.categoria || '',
       texto: escolhido.texto,
       explicacao: escolhido.explicacao || '',
       ref: escolhido.referencia || '',

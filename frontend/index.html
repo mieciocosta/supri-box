@@ -93,16 +93,21 @@
   .sub{color:var(--muted);font-size:14.5px;margin-top:12px;line-height:1.5;font-weight:400;
     max-width:30ch;margin-left:auto;margin-right:auto}
 
-  /* seletor de vibe — segmented control refinado */
-  .vibes{display:flex;gap:4px;background:rgba(255,255,255,.045);padding:5px;border-radius:14px;
-    border:1px solid var(--faint)}
-  .vibe{flex:1;border:0;background:transparent;color:var(--muted);font-family:inherit;
-    font-weight:500;font-size:12.5px;padding:10px 4px;border-radius:10px;cursor:pointer;
-    transition:.4s var(--soft);display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1}
-  .vibe span{font-size:15px;opacity:.85;transition:.3s var(--soft)}
-  .vibe small{font-size:10px;font-weight:400;opacity:.6;letter-spacing:.01em}
-  .vibe[aria-pressed="true"]{background:rgba(255,255,255,.07);color:var(--ink);
-    box-shadow:0 2px 10px rgba(0,0,0,.2),inset 0 0 0 1px var(--faint)}
+  /* seletor de vibe — chips roláveis na horizontal (cabe 7+ tipos) */
+  .vibes{display:flex;gap:7px;overflow-x:auto;overflow-y:hidden;padding:5px 2px 8px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%);
+            mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%)}
+  .vibes::-webkit-scrollbar{display:none}
+  .vibe{flex:0 0 auto;min-width:80px;border:1px solid var(--faint);background:rgba(255,255,255,.04);
+    color:var(--muted);font-family:inherit;font-weight:500;font-size:12.5px;padding:9px 12px;border-radius:13px;
+    cursor:pointer;transition:.35s var(--soft);display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.05;
+    scroll-snap-align:center}
+  .vibe span{font-size:16px;opacity:.85;transition:.3s var(--soft)}
+  .vibe small{font-size:9.5px;font-weight:400;opacity:.6;letter-spacing:.01em;white-space:nowrap}
+  .vibe[aria-pressed="true"]{color:var(--ink);border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+    background:color-mix(in srgb,var(--accent) 12%,rgba(255,255,255,.04));
+    box-shadow:0 2px 14px -4px color-mix(in srgb,var(--accent) 50%,transparent)}
   .vibe[aria-pressed="true"] span{opacity:1;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 60%,transparent))}
 
   /* palco */
@@ -214,6 +219,7 @@
     .reveal.show{animation:none}
     .bloom.go{animation:none}
     .orb.opening{animation:none}
+    .splash .so{animation:none}
   }
 
   /* ===== modal de assinatura ===== */
@@ -270,9 +276,27 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .ok-emoji{font-size:50px;text-align:center;margin:6px 0 6px}
   .hidden{display:none!important}
+
+  /* ===== splash de abertura ===== */
+  .splash{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:16px;background:radial-gradient(circle at 50% 42%,#18222b 0%,var(--bg-0) 72%);
+    transition:opacity .7s var(--soft)}
+  .splash.gone{opacity:0;pointer-events:none}
+  .splash .so{width:104px;height:104px;border-radius:50%;
+    background:radial-gradient(circle at 36% 32%,#fff 0%,#bfe0d3 14%,#82b09c 52%,#2c5346 100%);
+    box-shadow:0 0 70px -6px rgba(130,176,156,.7),inset 0 -12px 24px rgba(0,0,0,.25),inset 0 8px 18px rgba(255,255,255,.45);
+    animation:soPulse 1.5s ease-in-out infinite}
+  @keyframes soPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+  .splash .sn{font-family:"Fraunces",serif;font-weight:500;font-size:30px;color:var(--ink);letter-spacing:.01em;margin-top:6px}
+  .splash .st{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--muted)}
 </style>
 </head>
 <body data-vibe="fe">
+  <div class="splash" id="splash" aria-hidden="true">
+    <div class="so"></div>
+    <div class="sn">SupriBox</div>
+    <div class="st">sua dose diária</div>
+  </div>
   <div class="aurora" aria-hidden="true"><b class="a1"></b><b class="a2"></b><b class="a3"></b></div>
   <canvas id="fx" aria-hidden="true"></canvas>
   <button class="snd" id="snd" aria-label="Ligar ou desligar o som">♪</button>
@@ -285,15 +309,13 @@
     </header>
 
     <div class="vibes" role="group" aria-label="Escolha a vibe">
-      <button class="vibe" data-vibe="fe" aria-pressed="true">
-        <span>☾</span>Fé<small>versículos & paz</small>
-      </button>
-      <button class="vibe" data-vibe="foco" aria-pressed="false">
-        <span>◐</span>Foco<small>clareza & equilíbrio</small>
-      </button>
-      <button class="vibe" data-vibe="forca" aria-pressed="false">
-        <span>✦</span>Força<small>garra & ânimo</small>
-      </button>
+      <button class="vibe" data-vibe="fe" aria-pressed="true"><span>☾</span>Fé<small>fé & paz</small></button>
+      <button class="vibe" data-vibe="foco" aria-pressed="false"><span>◐</span>Foco<small>clareza & metas</small></button>
+      <button class="vibe" data-vibe="forca" aria-pressed="false"><span>✦</span>Força<small>garra & ânimo</small></button>
+      <button class="vibe" data-vibe="sabedoria" aria-pressed="false"><span>❖</span>Sabedoria<small>pensadores</small></button>
+      <button class="vibe" data-vibe="gratidao" aria-pressed="false"><span>❀</span>Gratidão<small>bênçãos</small></button>
+      <button class="vibe" data-vibe="calma" aria-pressed="false"><span>☁</span>Calma<small>paz & ansiedade</small></button>
+      <button class="vibe" data-vibe="amor" aria-pressed="false"><span>♡</span>Amor<small>afeto & relações</small></button>
     </div>
 
     <div class="stage" id="stage">
@@ -303,7 +325,7 @@
         <span class="orb-ring"></span>
         <span class="orb-core"></span>
       </button>
-      <div class="hint" id="hint">toque para revelar</div>
+      <div class="hint" id="hint">toque na esfera para revelar</div>
 
       <div class="reveal" id="reveal" aria-live="polite">
         <span class="tag" id="rTag">Versículo</span>
@@ -315,7 +337,6 @@
     </div>
 
     <div class="actions">
-      <button class="btn btn-primary" id="openBtn">Revelar a caixinha</button>
       <div class="post" id="post" style="display:none">
         <div class="row">
           <button class="btn btn-ghost" id="againBtn"><span class="ic">✦</span> Outra</button>
@@ -339,7 +360,7 @@
 
       <div id="stepForm">
         <h2 id="sheetTitle">Sua caixinha todo dia</h2>
-        <p class="lead">A primeira sai por <b>1 centavo</b>. Depois, uma mensagem por dia no seu WhatsApp.</p>
+        <p class="lead">A estreia é um <b>presente por 1 centavo</b> (uma vez). Depois, uma mensagem todo dia no WhatsApp por menos de <b>R$ 0,33/dia</b>.</p>
 
         <div class="field">
           <label for="fNome">Seu nome</label>
@@ -407,58 +428,68 @@ const PERFIL = { fe:"idoso", foco:"adulto", forca:"jovem" };
 
 /* acento por vibe — paleta dessaturada, premium */
 const ACENTO = {
-  fe:   { accent:"#82b09c", deep:"#27433a" },  // eucalipto
-  foco: { accent:"#c9a77d", deep:"#4a3a26" },  // areia
-  forca:{ accent:"#d98c74", deep:"#4d2f26" }   // terracota
+  fe:       { accent:"#82b09c", deep:"#27433a" },  // eucalipto
+  foco:     { accent:"#c9a77d", deep:"#4a3a26" },  // areia
+  forca:    { accent:"#d98c74", deep:"#4d2f26" },  // terracota
+  sabedoria:{ accent:"#8e93c4", deep:"#2f3350" },  // índigo
+  gratidao: { accent:"#cf9aa8", deep:"#4a2f38" },  // rosé
+  calma:    { accent:"#7fa6c2", deep:"#243a4a" },  // azul sereno
+  amor:     { accent:"#d98f8a", deep:"#4a2b2b" }   // coral quente
 };
 
-/* acervo local (demo offline) — espelha o backend (seedData.js) */
+/* acervo local (demo offline) — espelha o backend (seedData.js), por categoria */
 const ACERVO = [
-  // versículos (domínio público) — minoria, dão âncora de fé
-  {tipo:"versiculo", texto:"O Senhor é o meu pastor; nada me faltará.", ref:"Salmos 23:1", exp:"Um lembrete de que você é cuidado: o essencial não vai te faltar hoje.", pesos:{idoso:6,adulto:3,jovem:1}},
-  {tipo:"versiculo", texto:"Tudo posso naquele que me fortalece.", ref:"Filipenses 4:13", exp:"Sua força não depende só de você — há uma fonte maior te sustentando.", pesos:{idoso:5,adulto:4,jovem:4}},
-  {tipo:"versiculo", texto:"Não temas, porque eu sou contigo.", ref:"Isaías 41:10", exp:"Você não enfrenta o dia sozinho; a coragem nasce de se sentir acompanhado.", pesos:{idoso:6,adulto:4,jovem:3}},
-  {tipo:"versiculo", texto:"Vinde a mim todos os que estais cansados, e eu vos aliviarei.", ref:"Mateus 11:28", exp:"Descanso é permitido. Parar pra respirar também é um ato de fé.", pesos:{idoso:6,adulto:4,jovem:2}},
-  {tipo:"versiculo", texto:"O choro pode durar uma noite, mas a alegria vem pela manhã.", ref:"Salmos 30:5", exp:"A dor de hoje tem prazo; dias melhores fazem parte do caminho.", pesos:{idoso:6,adulto:3,jovem:1}},
-  // fé & apoio — frases de incentivo com pegada cristã
-  {tipo:"frase", texto:"A fé não tira a tempestade, mas segura a sua mão dentro dela.", ref:"", exp:"Acreditar não acaba com os problemas, mas te dá firmeza pra atravessá-los.", pesos:{idoso:5,adulto:4,jovem:3}},
-  {tipo:"frase", texto:"Deus não te trouxe até aqui para te abandonar agora.", ref:"", exp:"Olhe pra trás: você já superou muito. Esse capítulo também vai passar.", pesos:{idoso:6,adulto:4,jovem:3}},
-  {tipo:"frase", texto:"Respira. O mesmo cuidado que te guardou ontem já está no seu amanhã.", ref:"", exp:"A proteção que te trouxe até aqui continua com você adiante.", pesos:{idoso:6,adulto:4,jovem:2}},
-  {tipo:"frase", texto:"Gratidão transforma o que você tem no que basta.", ref:"", exp:"Reparar no que já é bom muda o jeito como o dia inteiro te afeta.", pesos:{idoso:4,adulto:4,jovem:3}},
-  {tipo:"frase", texto:"Você é amado mesmo nos dias em que não produz nada.", ref:"", exp:"Seu valor não está no quanto você faz, mas em quem você é.", pesos:{idoso:5,adulto:4,jovem:3}},
-  // foco & disciplina
-  {tipo:"frase", texto:"Comece pequeno, comece imperfeito, mas comece.", ref:"", exp:"Não espere o momento perfeito; o primeiro passo imperfeito já te move.", pesos:{idoso:1,adulto:4,jovem:6}},
-  {tipo:"frase", texto:"Você não precisa de pressa, precisa de direção.", ref:"", exp:"Saber pra onde vai vale mais do que correr sem rumo.", pesos:{idoso:2,adulto:5,jovem:5}},
-  {tipo:"frase", texto:"Disciplina é lembrar do que você quis quando ainda estava inspirado.", ref:"", exp:"Nos dias sem vontade, é a disciplina que honra o sonho que você teve.", pesos:{idoso:1,adulto:4,jovem:6}},
-  {tipo:"frase", texto:"Sua rotina silenciosa de hoje é o milagre que você vai agradecer amanhã.", ref:"", exp:"O esforço discreto de agora constrói a vitória que ainda vai chegar.", pesos:{idoso:3,adulto:5,jovem:4}},
-  // força & ânimo
-  {tipo:"frase", texto:"Você já sobreviveu a 100% dos seus piores dias. Esse não vai ser diferente.", ref:"", exp:"Seu histórico prova que você é capaz de atravessar isso também.", pesos:{idoso:2,adulto:5,jovem:6}},
-  {tipo:"frase", texto:"Coragem não é não ter medo. É caminhar de mãos dadas com ele.", ref:"", exp:"Sentir medo é normal; agir mesmo assim é o que te faz corajoso.", pesos:{idoso:2,adulto:5,jovem:5}},
-  {tipo:"frase", texto:"Cai sete vezes, levanta oito. É assim que se constrói gente firme.", ref:"", exp:"O que te define não é cair, é a teimosia de levantar de novo.", pesos:{idoso:1,adulto:4,jovem:6}},
-  {tipo:"frase", texto:"Não desista na curva achando que era o fim da estrada.", ref:"", exp:"Às vezes o que parece um beco é só uma curva antes da reta boa.", pesos:{idoso:2,adulto:4,jovem:6}},
-  // carinho / bom dia
-  {tipo:"frase", texto:"Bom dia. Que hoje seja leve e cheio de pequenas alegrias.", ref:"", exp:"Um respiro de carinho pra começar o dia com o coração mais leve.", pesos:{idoso:5,adulto:3,jovem:1}},
-  {tipo:"frase", texto:"Você é mais forte do que imagina e mais amado do que pensa.", ref:"", exp:"Nos dias difíceis, você tem mais reservas e mais gente do que acredita.", pesos:{idoso:4,adulto:4,jovem:4}},
-  // força do dia (símbolo discreto)
-  {tipo:"vibe", emoji:"✦", texto:"Hoje é um bom dia pra começar de novo.", ref:"", exp:"Todo amanhecer é uma chance limpa de recomeçar — aproveite essa.", pesos:{idoso:1,adulto:3,jovem:6}},
-  {tipo:"vibe", emoji:"◆", texto:"Faça hoje o que o seu futuro vai agradecer.", ref:"", exp:"Pequenas escolhas de hoje são presentes pro você de amanhã.", pesos:{idoso:1,adulto:3,jovem:6}}
+  // fé
+  {categoria:"fe", tipo:"versiculo", texto:"O Senhor é o meu pastor; nada me faltará.", ref:"Salmos 23:1", exp:"Um lembrete de que você é cuidado: o essencial não vai te faltar hoje."},
+  {categoria:"fe", tipo:"versiculo", texto:"Tudo posso naquele que me fortalece.", ref:"Filipenses 4:13", exp:"Sua força não depende só de você — há uma fonte maior te sustentando."},
+  {categoria:"fe", tipo:"versiculo", texto:"Não temas, porque eu sou contigo.", ref:"Isaías 41:10", exp:"Você não enfrenta o dia sozinho; a coragem nasce de se sentir acompanhado."},
+  {categoria:"fe", tipo:"frase", texto:"Deus não te trouxe até aqui para te abandonar agora.", exp:"Olhe pra trás: você já superou muito. Esse capítulo também vai passar."},
+  // foco
+  {categoria:"foco", tipo:"frase", texto:"Comece pequeno, comece imperfeito, mas comece.", exp:"Não espere o momento perfeito; o primeiro passo imperfeito já te move."},
+  {categoria:"foco", tipo:"frase", texto:"Você não precisa de pressa, precisa de direção.", exp:"Saber pra onde vai vale mais do que correr sem rumo."},
+  {categoria:"foco", tipo:"frase", texto:"Feito é melhor que perfeito. O perfeito quase nunca sai do papel.", exp:"Avançar imperfeito ensina mais do que planejar sem entregar."},
+  {categoria:"foco", tipo:"frase", texto:"Um dia de cada vez já é o suficiente para mudar uma vida.", exp:"Mudança não exige grandes saltos, só constância no pequeno."},
+  // força
+  {categoria:"forca", tipo:"frase", texto:"Você já sobreviveu a 100% dos seus piores dias. Esse não vai ser diferente.", exp:"Seu histórico prova que você é capaz de atravessar isso também."},
+  {categoria:"forca", tipo:"frase", texto:"Coragem não é não ter medo. É caminhar de mãos dadas com ele.", exp:"Sentir medo é normal; agir mesmo assim é o que te faz corajoso."},
+  {categoria:"forca", tipo:"frase", texto:"Cai sete vezes, levanta oito. É assim que se constrói gente firme.", exp:"O que te define não é cair, é a teimosia de levantar de novo."},
+  {categoria:"forca", tipo:"vibe", emoji:"✦", texto:"Hoje é um bom dia pra começar de novo.", exp:"Todo amanhecer é uma chance limpa de recomeçar — aproveite essa."},
+  // sabedoria
+  {categoria:"sabedoria", tipo:"frase", texto:"O sábio não é o que tem todas as respostas, mas o que faz as perguntas certas.", exp:"Crescer começa por se permitir não saber e querer entender."},
+  {categoria:"sabedoria", tipo:"frase", texto:"A vida se entende olhando pra trás, mas só se vive olhando pra frente.", exp:"Aprenda com o ontem, mas viva voltado pro amanhã."},
+  {categoria:"sabedoria", tipo:"frase", texto:"O que você planta no silêncio, colhe no caráter.", exp:"Quem você é nos bastidores constrói quem você se torna."},
+  {categoria:"sabedoria", tipo:"frase", texto:"Não busque ser uma pessoa de sucesso, mas uma pessoa de valor.", exp:"Valor verdadeiro fica; status passa."},
+  // gratidão
+  {categoria:"gratidao", tipo:"frase", texto:"Contar bênçãos é trocar a lente da falta pela lente da fartura.", exp:"O que você olha cresce; escolha olhar o que já tem."},
+  {categoria:"gratidao", tipo:"frase", texto:"Gratidão transforma o que você tem no que basta.", exp:"Reparar no que já é bom muda o jeito como o dia inteiro te afeta."},
+  {categoria:"gratidao", tipo:"frase", texto:"Acorde e diga obrigado: o ar, a luz, mais um dia — nada disso era garantido.", exp:"Começar grato muda o tom de tudo que vem depois."},
+  {categoria:"gratidao", tipo:"frase", texto:"Hoje alguém orou por você sem te contar. Você é mais amado do que imagina.", exp:"Você não caminha sozinho — há afeto invisível te cercando."},
+  // calma
+  {categoria:"calma", tipo:"frase", texto:"Respira fundo três vezes. A maioria dos medos perde força quando o ar volta.", exp:"O corpo acalma a mente: comece pela respiração."},
+  {categoria:"calma", tipo:"frase", texto:"A ansiedade mora no futuro; a paz mora no presente. Volte pra agora.", exp:"Traga a atenção pro instante: é só aqui que dá pra respirar."},
+  {categoria:"calma", tipo:"frase", texto:"Tá tudo bem não estar tudo bem. Sentir é permitido; passar, também.", exp:"Acolher a emoção é o primeiro passo pra ela se acalmar."},
+  {categoria:"calma", tipo:"frase", texto:"Descansar também é produtivo. Até a terra precisa de pousio pra dar fruto.", exp:"Pausa não é preguiça; é o que te mantém inteiro."},
+  // amor
+  {categoria:"amor", tipo:"frase", texto:"Diga hoje o que você guarda pra dizer um dia: o amor não combina com adiamento.", exp:"Palavras de afeto têm prazo melhor quando ditas agora."},
+  {categoria:"amor", tipo:"frase", texto:"Perdoar é soltar a corrente que prendia você ao que doeu.", exp:"O perdão liberta primeiro quem perdoa."},
+  {categoria:"amor", tipo:"frase", texto:"Família não é perfeição; é gente imperfeita escolhendo ficar.", exp:"O vínculo se constrói na permanência, não na ausência de falhas."},
+  {categoria:"amor", tipo:"frase", texto:"Você é amado mesmo nos dias em que não produz nada.", exp:"Seu valor não está no quanto você faz, mas em quem você é."}
 ];
 
 let ultimoTexto = null;
-function sortearLocal(perfil){
-  const elegiveis = ACERVO.filter(c => (c.pesos[perfil]||0) > 0 && c.texto !== ultimoTexto);
-  const pool = elegiveis.length ? elegiveis : ACERVO.filter(c => (c.pesos[perfil]||0) > 0);
-  const total = pool.reduce((s,c)=>s+c.pesos[perfil],0);
-  let r = Math.random()*total;
-  for(const c of pool){ r -= c.pesos[perfil]; if(r<=0){ ultimoTexto=c.texto; return c; } }
-  return pool[0];
+function sortearLocal(categoria){
+  let pool = ACERVO.filter(c => c.categoria === categoria && c.texto !== ultimoTexto);
+  if(!pool.length) pool = ACERVO.filter(c => c.categoria === categoria);
+  if(!pool.length) pool = ACERVO.slice();
+  const c = pool[Math.floor(Math.random()*pool.length)];
+  ultimoTexto = c.texto; return c;
 }
-async function sortear(perfil){
+async function sortear(categoria){
   if(USE_API){
-    try{ const res = await fetch(`${API_BASE}/caixinha?perfil=${perfil}`); if(res.ok) return await res.json(); }
+    try{ const res = await fetch(`${API_BASE}/caixinha?categoria=${categoria}`); if(res.ok) return await res.json(); }
     catch(e){}
   }
-  return sortearLocal(perfil);
+  return sortearLocal(categoria);
 }
 /* normaliza campos vindos da API (referencia/explicacao) ou do acervo local (ref/exp) */
 function refDe(it){ return it.ref || it.referencia || ""; }
@@ -569,7 +600,7 @@ function motes(n){
 const bloomEl=document.getElementById("bloom");
 const orb=document.getElementById("orb"), stage=document.getElementById("stage");
 const reveal=document.getElementById("reveal"), hint=document.getElementById("hint");
-const openBtn=document.getElementById("openBtn"), againBtn=document.getElementById("againBtn");
+const againBtn=document.getElementById("againBtn");
 const shareBtn=document.getElementById("shareBtn"), subBtn=document.getElementById("subBtn");
 const postEl=document.getElementById("post");
 const rTag=document.getElementById("rTag"), rBody=document.getElementById("rBody"),
@@ -600,6 +631,7 @@ document.querySelectorAll(".vibe").forEach(btn=>{
   btn.addEventListener("click",()=>{
     const v=btn.dataset.vibe;
     document.querySelectorAll(".vibe").forEach(b=>b.setAttribute("aria-pressed", b===btn?"true":"false"));
+    try{ btn.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"}); }catch(e){}
     if(v===vibeAtual && reveal.classList.contains("show")) return;
     vibeAtual=v; aplicarAcento(v);
     // com mensagem na tela -> troca pro novo tipo na hora (fluido);
@@ -631,10 +663,10 @@ function preencherCard(item){
 }
 
 async function abrir(){
-  if(abrindo) return; abrindo=true; openBtn.disabled=true; aud();
+  if(abrindo) return; abrindo=true; aud();
   const myRun=++runId;
 
-  const item = await sortear(PERFIL[vibeAtual]); // sempre fresco (sem trava diária)
+  const item = await sortear(vibeAtual); // sempre fresco (sem trava diária)
   if(myRun!==runId || !item) return; // trocou de vibe enquanto buscava -> aborta limpo
 
   // 1) inspira
@@ -647,9 +679,9 @@ async function abrir(){
   orb.classList.remove("opening"); orb.classList.add("open");
   bloomEl.classList.remove("go"); void bloomEl.offsetWidth; bloomEl.classList.add("go");
   const rich = preencherCard(item);
-  motes(rich ? 24 : 15);
+  motes(rich ? 42 : 28);
   somRevelar(rich);
-  if(navigator.vibrate) try{navigator.vibrate(rich?[10,40,12]:[10])}catch(e){}
+  if(navigator.vibrate) try{navigator.vibrate(rich?[12,40,16]:[12])}catch(e){}
   hint.classList.add("gone");
 
   await wait(motionOK ? 240 : 40);
@@ -657,9 +689,9 @@ async function abrir(){
 
   // 3) revela
   reveal.classList.add("show");
-  openBtn.style.display="none"; postEl.style.display="flex";
+  postEl.style.display="flex";
 
-  abrindo=false; openBtn.disabled=false;
+  abrindo=false;
 }
 
 /* Troca o conteúdo do card por um novo sorteio (mesma vibe ou outra), com
@@ -668,7 +700,7 @@ async function abrir(){
 async function swapMensagem(){
   const myRun=++runId;
   reveal.classList.add("swapping");                 // some já (feedback imediato)
-  const item = await sortear(PERFIL[vibeAtual]);
+  const item = await sortear(vibeAtual);
   if(myRun!==runId) return;                          // veio outro clique -> deixa pro novo
   if(!item){ reveal.classList.remove("swapping"); return; }
   await wait(motionOK ? 190 : 20);
@@ -676,8 +708,8 @@ async function swapMensagem(){
   preencherCard(item);
   void reveal.offsetWidth;                           // reflow -> garante a volta suave
   reveal.classList.remove("swapping");
-  motes(10); somRevelar(false);
-  if(navigator.vibrate) try{navigator.vibrate(5)}catch(e){}
+  motes(18); somRevelar(false);
+  if(navigator.vibrate) try{navigator.vibrate(7)}catch(e){}
 }
 
 function resetar(){
@@ -685,12 +717,10 @@ function resetar(){
   orb.classList.remove("open","opening");
   reveal.className="reveal";
   hint.classList.remove("gone");
-  openBtn.style.display="block"; openBtn.disabled=false;
   postEl.style.display="none";
   abrindo=false;
 }
 
-openBtn.addEventListener("click",abrir);
 againBtn.addEventListener("click",swapMensagem);
 shareBtn.addEventListener("click",()=>{ if(itemAtual) compartilhar(itemAtual); });
 subBtn.addEventListener("click",()=>{ ativarPush(); abrirModal(); }); // assinatura + ativa notificacoes
@@ -731,7 +761,7 @@ async function gerarImagemBlob(item){
   const space=(s)=>s.split("").join(" ");
   x.fillStyle=hexA("#ffffff",0.62); x.font="600 30px Inter,sans-serif";
   x.fillText(space("SUPRIBOX"), W/2, 150);
-  const sym={fe:"☾",foco:"◐",forca:"✦"}[vibeAtual]||"✦";
+  const sym={fe:"☾",foco:"◐",forca:"✦",sabedoria:"❖",gratidao:"❀",calma:"☁",amor:"♡"}[vibeAtual]||"✦";
   x.fillStyle=ac.accent; x.font="500 64px Inter,sans-serif"; x.fillText(sym, W/2, 260);
   x.fillStyle=hexA(ac.accent,0.95); x.font="600 25px Inter,sans-serif";
   x.fillText(space((TAGS[item.tipo]||"Mensagem").toUpperCase()), W/2, 335);
@@ -807,12 +837,19 @@ const formMsg=document.getElementById("formMsg"), goPix=document.getElementById(
 let perfilSel="adulto", planoSel=null, planosCache=[], pollTimer=null;
 
 const PLANOS_FALLBACK = [
-  { slug:"isca",       nome:"Primeira caixinha",            preco:0.01, destaque:"Experimente por 1 centavo" },
-  { slug:"mensal",     nome:"Caixinha todo dia (mensal)",   preco:9.90, destaque:"Uma mensagem por dia no WhatsApp" },
-  { slug:"trimestral", nome:"Caixinha todo dia (3 meses)",  preco:24.90,destaque:"Economize levando 3 meses" }
+  { slug:"isca",       nome:"Presente de estreia",  preco:0.01, periodoDias:1,   destaque:"1 mensagem, só pra experimentar" },
+  { slug:"mensal",     nome:"Todo dia (mensal)",    preco:9.90, periodoDias:30,  destaque:"Uma mensagem por dia no WhatsApp" },
+  { slug:"trimestral", nome:"Todo dia (3 meses)",   preco:24.90,periodoDias:90,  destaque:"Economize 16%" },
+  { slug:"anual",      nome:"Todo dia (1 ano)",     preco:79.90,periodoDias:365, destaque:"Melhor custo — 2 meses grátis" }
 ];
-const PLANO_ICON = { isca:"✶", mensal:"❖", trimestral:"◆" };
+const PLANO_ICON = { isca:"✶", mensal:"❖", trimestral:"◆", anual:"✦" };
 const fmtBRL = (v)=> "R$ " + Number(v).toFixed(2).replace(".", ",");
+// valor por dia (só pra planos recorrentes) — deixa o preço fazer sentido
+function porDia(p){
+  if(!p.periodoDias || p.periodoDias<=1) return "";
+  const v=p.preco/p.periodoDias;
+  return "≈ R$ " + v.toFixed(2).replace(".", ",") + "/dia";
+}
 
 function abrirModal(){
   if(!USE_API){ window.open(WA_FALLBACK,"_blank"); return; }
@@ -841,8 +878,9 @@ function renderPlanos(){
     b.type="button"; b.className="pick"; b.dataset.slug=p.slug;
     b.setAttribute("aria-pressed", i==0?"true":"false");
     if(i==0) planoSel=p.slug;
+    const pd=porDia(p);
     b.innerHTML=`<span class="ic">${PLANO_ICON[p.slug]||"❖"}</span>
-      <span class="t"><b>${p.nome}</b><small>${p.destaque||""}</small></span>
+      <span class="t"><b>${p.nome}</b><small>${p.destaque||""}${pd?" · "+pd:""}</small></span>
       <span class="price">${fmtBRL(p.preco)}</span>`;
     b.addEventListener("click",()=>{
       planPick.querySelectorAll(".pick").forEach(x=>x.setAttribute("aria-pressed","false"));
@@ -917,7 +955,7 @@ document.getElementById("closePix").addEventListener("click",fecharModal);
 document.getElementById("okDone").addEventListener("click",fecharModal);
 overlay.addEventListener("click",e=>{ if(e.target==overlay) fecharModal(); });
 
-/* PWA — service worker + push (notificações) */
+/* PWA — service worker + push (notificações) + splash */
 function urlB64ToUint8(b){
   const pad="=".repeat((4-b.length%4)%4);
   const s=(b+pad).replace(/-/g,"+").replace(/_/g,"/");
@@ -942,6 +980,11 @@ async function ativarPush(){
     await fetch(API_BASE+"/push/subscribe",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(sub) });
   }catch(e){ /* silencioso */ }
 }
+// esconde o splash assim que a página carrega (com um respiro pra marca)
+function fecharSplash(){ const s=document.getElementById("splash"); if(s) s.classList.add("gone"); }
+window.addEventListener("load",()=> setTimeout(fecharSplash, 950));
+setTimeout(fecharSplash, 2600); // garantia, caso o load demore
+
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("/sw.js")
