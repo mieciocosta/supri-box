@@ -3,3 +3,13 @@ node_modules/
 .DS_Store
 dist/
 *.log
+
+# icones do PWA sao gerados no build (tools/genIcons.js)
+frontend/icons/
+
+# artefatos do empacotamento Android (TWA / Bubblewrap)
+*.keystore
+*.aab
+*.apk
+android/
+.bubblewrap/

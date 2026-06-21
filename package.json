@@ -4,7 +4,8 @@
   "description": "SupriBox - caixinhas surpresa segmentadas por perfil. Deploy num servico so (backend serve o frontend).",
   "private": true,
   "scripts": {
-    "postinstall": "cd backend && npm install && npx prisma generate",
+    "postinstall": "node tools/genIcons.js && cd backend && npm install && npx prisma generate",
+    "icons": "node tools/genIcons.js",
     "start": "cd backend && npx prisma db push --accept-data-loss && node src/seed.js && npm start"
   }
 }

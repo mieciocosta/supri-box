@@ -4,6 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>SupriBox · sua dose diária de surpresa</title>
+<meta name="description" content="Uma mensagem boa todo dia: fé, foco e força." />
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="theme-color" content="#0e1116" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="SupriBox" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,400;9..144,0,500;9..144,1,400;9..144,1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -734,6 +743,11 @@ document.getElementById("closeForm").addEventListener("click",fecharModal);
 document.getElementById("closePix").addEventListener("click",fecharModal);
 document.getElementById("okDone").addEventListener("click",fecharModal);
 overlay.addEventListener("click",e=>{ if(e.target===overlay) fecharModal(); });
+
+/* PWA — registra o service worker (instalável + base do app TWA) */
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+}
 </script>
 </body>
 </html>
