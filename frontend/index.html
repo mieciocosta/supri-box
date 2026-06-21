@@ -219,6 +219,7 @@
     .reveal.show{animation:none}
     .bloom.go{animation:none}
     .orb.opening{animation:none}
+    .splash .so{animation:none}
   }
 
   /* ===== modal de assinatura ===== */
@@ -275,9 +276,27 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .ok-emoji{font-size:50px;text-align:center;margin:6px 0 6px}
   .hidden{display:none!important}
+
+  /* ===== splash de abertura ===== */
+  .splash{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:16px;background:radial-gradient(circle at 50% 42%,#18222b 0%,var(--bg-0) 72%);
+    transition:opacity .7s var(--soft)}
+  .splash.gone{opacity:0;pointer-events:none}
+  .splash .so{width:104px;height:104px;border-radius:50%;
+    background:radial-gradient(circle at 36% 32%,#fff 0%,#bfe0d3 14%,#82b09c 52%,#2c5346 100%);
+    box-shadow:0 0 70px -6px rgba(130,176,156,.7),inset 0 -12px 24px rgba(0,0,0,.25),inset 0 8px 18px rgba(255,255,255,.45);
+    animation:soPulse 1.5s ease-in-out infinite}
+  @keyframes soPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+  .splash .sn{font-family:"Fraunces",serif;font-weight:500;font-size:30px;color:var(--ink);letter-spacing:.01em;margin-top:6px}
+  .splash .st{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--muted)}
 </style>
 </head>
 <body data-vibe="fe">
+  <div class="splash" id="splash" aria-hidden="true">
+    <div class="so"></div>
+    <div class="sn">SupriBox</div>
+    <div class="st">sua dose diária</div>
+  </div>
   <div class="aurora" aria-hidden="true"><b class="a1"></b><b class="a2"></b><b class="a3"></b></div>
   <canvas id="fx" aria-hidden="true"></canvas>
   <button class="snd" id="snd" aria-label="Ligar ou desligar o som">♪</button>
@@ -306,7 +325,7 @@
         <span class="orb-ring"></span>
         <span class="orb-core"></span>
       </button>
-      <div class="hint" id="hint">toque para revelar</div>
+      <div class="hint" id="hint">toque na esfera para revelar</div>
 
       <div class="reveal" id="reveal" aria-live="polite">
         <span class="tag" id="rTag">Versículo</span>
@@ -318,7 +337,6 @@
     </div>
 
     <div class="actions">
-      <button class="btn btn-primary" id="openBtn">Revelar a caixinha</button>
       <div class="post" id="post" style="display:none">
         <div class="row">
           <button class="btn btn-ghost" id="againBtn"><span class="ic">✦</span> Outra</button>
@@ -582,7 +600,7 @@ function motes(n){
 const bloomEl=document.getElementById("bloom");
 const orb=document.getElementById("orb"), stage=document.getElementById("stage");
 const reveal=document.getElementById("reveal"), hint=document.getElementById("hint");
-const openBtn=document.getElementById("openBtn"), againBtn=document.getElementById("againBtn");
+const againBtn=document.getElementById("againBtn");
 const shareBtn=document.getElementById("shareBtn"), subBtn=document.getElementById("subBtn");
 const postEl=document.getElementById("post");
 const rTag=document.getElementById("rTag"), rBody=document.getElementById("rBody"),
@@ -645,7 +663,7 @@ function preencherCard(item){
 }
 
 async function abrir(){
-  if(abrindo) return; abrindo=true; openBtn.disabled=true; aud();
+  if(abrindo) return; abrindo=true; aud();
   const myRun=++runId;
 
   const item = await sortear(vibeAtual); // sempre fresco (sem trava diária)
@@ -661,9 +679,9 @@ async function abrir(){
   orb.classList.remove("opening"); orb.classList.add("open");
   bloomEl.classList.remove("go"); void bloomEl.offsetWidth; bloomEl.classList.add("go");
   const rich = preencherCard(item);
-  motes(rich ? 24 : 15);
+  motes(rich ? 42 : 28);
   somRevelar(rich);
-  if(navigator.vibrate) try{navigator.vibrate(rich?[10,40,12]:[10])}catch(e){}
+  if(navigator.vibrate) try{navigator.vibrate(rich?[12,40,16]:[12])}catch(e){}
   hint.classList.add("gone");
 
   await wait(motionOK ? 240 : 40);
@@ -671,9 +689,9 @@ async function abrir(){
 
   // 3) revela
   reveal.classList.add("show");
-  openBtn.style.display="none"; postEl.style.display="flex";
+  postEl.style.display="flex";
 
-  abrindo=false; openBtn.disabled=false;
+  abrindo=false;
 }
 
 /* Troca o conteúdo do card por um novo sorteio (mesma vibe ou outra), com
@@ -690,8 +708,8 @@ async function swapMensagem(){
   preencherCard(item);
   void reveal.offsetWidth;                           // reflow -> garante a volta suave
   reveal.classList.remove("swapping");
-  motes(10); somRevelar(false);
-  if(navigator.vibrate) try{navigator.vibrate(5)}catch(e){}
+  motes(18); somRevelar(false);
+  if(navigator.vibrate) try{navigator.vibrate(7)}catch(e){}
 }
 
 function resetar(){
@@ -699,12 +717,10 @@ function resetar(){
   orb.classList.remove("open","opening");
   reveal.className="reveal";
   hint.classList.remove("gone");
-  openBtn.style.display="block"; openBtn.disabled=false;
   postEl.style.display="none";
   abrindo=false;
 }
 
-openBtn.addEventListener("click",abrir);
 againBtn.addEventListener("click",swapMensagem);
 shareBtn.addEventListener("click",()=>{ if(itemAtual) compartilhar(itemAtual); });
 subBtn.addEventListener("click",()=>{ ativarPush(); abrirModal(); }); // assinatura + ativa notificacoes
@@ -939,7 +955,7 @@ document.getElementById("closePix").addEventListener("click",fecharModal);
 document.getElementById("okDone").addEventListener("click",fecharModal);
 overlay.addEventListener("click",e=>{ if(e.target==overlay) fecharModal(); });
 
-/* PWA — service worker + push (notificações) */
+/* PWA — service worker + push (notificações) + splash */
 function urlB64ToUint8(b){
   const pad="=".repeat((4-b.length%4)%4);
   const s=(b+pad).replace(/-/g,"+").replace(/_/g,"/");
@@ -964,6 +980,11 @@ async function ativarPush(){
     await fetch(API_BASE+"/push/subscribe",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(sub) });
   }catch(e){ /* silencioso */ }
 }
+// esconde o splash assim que a página carrega (com um respiro pra marca)
+function fecharSplash(){ const s=document.getElementById("splash"); if(s) s.classList.add("gone"); }
+window.addEventListener("load",()=> setTimeout(fecharSplash, 950));
+setTimeout(fecharSplash, 2600); // garantia, caso o load demore
+
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("/sw.js")
