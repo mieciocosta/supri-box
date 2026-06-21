@@ -8,6 +8,7 @@ const usuarios = require('./routes/usuarios');
 const webhook = require('./routes/webhook');
 const pagamento = require('./routes/pagamento');
 const assinatura = require('./routes/assinatura');
+const { dispararDiaria, agendarDiaria } = require('./services/entregaDiaria');
 
 const app = express();
 
@@ -45,6 +46,23 @@ setInterval(() => {
 
 // health check (Railway aponta o healthcheck pra ca)
 app.get('/health', (_req, res) => res.json({ app: 'SupriBox', status: 'ok' }));
+
+// disparo manual da entrega diaria (teste). Protegido por ADMIN_TOKEN.
+// uso: POST /admin/entrega-diaria  header: x-admin-token: <ADMIN_TOKEN>
+//      ?forcar=1 reenvia mesmo pra quem ja recebeu hoje.
+app.post('/admin/entrega-diaria', async (req, res) => {
+  const token = process.env.ADMIN_TOKEN;
+  if (!token || req.headers['x-admin-token'] !== token) {
+    return res.status(403).json({ erro: 'Acesso negado.' });
+  }
+  try {
+    const r = await dispararDiaria({ forcar: req.query.forcar === '1' });
+    res.json({ ok: true, ...r });
+  } catch (e) {
+    console.error('admin entrega-diaria', e);
+    res.status(500).json({ erro: 'Falha ao disparar.' });
+  }
+});
 
 // API (rotas de escrita com limite mais apertado)
 app.use('/caixinha', rateLimit(120, 60000), caixinha);
@@ -88,4 +106,7 @@ app.get('/sw.js', (_req, res) => {
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`SupriBox rodando na porta ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`SupriBox rodando na porta ${PORT}`);
+  agendarDiaria(); // liga a entrega diaria automatica
+});
