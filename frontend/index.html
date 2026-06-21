@@ -150,6 +150,61 @@
     .box-wrap.open .lid,.box-wrap.open .bow{transition:opacity .2s linear}
     .spark{display:none}
   }
+
+  /* ===== modal de assinatura ===== */
+  .overlay{position:fixed;inset:0;z-index:50;background:rgba(10,6,24,.72);
+    backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;
+    padding:0;opacity:0;transition:opacity .3s var(--ease)}
+  .overlay.show{display:flex;opacity:1}
+  .sheet{width:100%;max-width:460px;background:linear-gradient(180deg,#241738,#1b1230);
+    border-radius:26px 26px 0 0;border:1px solid rgba(255,255,255,.08);border-bottom:0;
+    padding:24px 22px max(26px,env(safe-area-inset-bottom));color:var(--cream);
+    box-shadow:0 -30px 80px -20px rgba(0,0,0,.7);
+    transform:translateY(100%);transition:transform .42s var(--ease);max-height:92dvh;overflow-y:auto}
+  .overlay.show .sheet{transform:translateY(0)}
+  .sheet .grab{width:42px;height:5px;border-radius:3px;background:rgba(255,255,255,.2);margin:0 auto 16px}
+  .sheet h2{font-family:"Fraunces",serif;font-weight:600;font-size:24px;text-align:center;line-height:1.1}
+  .sheet .lead{color:var(--muted);font-size:14px;text-align:center;margin-top:8px;line-height:1.45}
+  .field{margin-top:16px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.02em}
+  .field input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+    border-radius:13px;padding:13px 14px;color:var(--cream);font-family:inherit;font-size:15px;outline:none;
+    transition:.2s var(--ease)}
+  .field input:focus{border-color:var(--gold);background:rgba(255,255,255,.09)}
+  .plan-pick{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+  .pick{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+    background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;
+    padding:13px 15px;color:var(--cream);font-family:inherit;transition:.2s var(--ease)}
+  .pick[aria-pressed="true"]{border-color:var(--gold);background:rgba(232,185,94,.12)}
+  .pick .ic{font-size:22px;line-height:1}
+  .pick .t{flex:1}
+  .pick .t b{display:block;font-size:15px;font-weight:600}
+  .pick .t small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .pick .price{font-family:"Fraunces",serif;font-weight:600;font-size:18px;color:var(--gold-soft)}
+  .row-perfil{display:flex;gap:9px;margin-top:8px}
+  .row-perfil .pick{flex-direction:column;align-items:center;text-align:center;gap:5px;padding:12px 6px}
+  .msg{font-size:13px;text-align:center;margin-top:12px;color:#ff9d90;min-height:18px}
+  .sheet .btn{margin-top:18px}
+  .sheet .btn:disabled{opacity:.5;cursor:not-allowed}
+  .link-min{display:block;text-align:center;margin-top:14px;color:var(--muted);font-size:13px;
+    background:none;border:0;width:100%;cursor:pointer;font-family:inherit}
+
+  /* etapa pix */
+  .pix-box{margin-top:8px;text-align:center}
+  .pix-box img{width:208px;height:208px;border-radius:16px;background:#fff;padding:10px;margin:6px auto 0;display:block}
+  .pix-amount{font-family:"Fraunces",serif;font-size:30px;color:var(--gold-soft);margin:6px 0 2px}
+  .pix-plan{color:var(--muted);font-size:13px;margin-bottom:6px}
+  .copia{display:flex;gap:8px;margin-top:14px}
+  .copia input{flex:1;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:12px;
+    padding:12px;color:var(--cream);font-size:12px;font-family:ui-monospace,monospace;overflow:hidden;text-overflow:ellipsis}
+  .copia button{border:0;border-radius:12px;padding:0 16px;font-weight:700;font-family:inherit;cursor:pointer;
+    background:var(--gold);color:var(--ink)}
+  .await{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;color:var(--muted);font-size:13.5px}
+  .spinner{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.18);border-top-color:var(--gold);
+    border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ok-emoji{font-size:54px;text-align:center;margin:6px 0 4px}
+  .hidden{display:none!important}
 </style>
 </head>
 <body data-vibe="serenidade">
@@ -200,6 +255,72 @@
       Gostou? <b>Receba sua caixinha todo dia</b> direto no
       <a class="wa" href="#" id="wa">WhatsApp →</a>
     </footer>
+  </div>
+
+  <!-- ===== modal de assinatura ===== -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="grab"></div>
+
+      <!-- etapa 1: formulario -->
+      <div id="stepForm">
+        <h2 id="sheetTitle">Sua caixinha todo dia ✨</h2>
+        <p class="lead">A primeira sai por <b>1 centavo</b>. Depois é uma surpresa por dia no seu WhatsApp.</p>
+
+        <div class="field">
+          <label for="fNome">Seu nome</label>
+          <input id="fNome" type="text" autocomplete="name" placeholder="Como te chamamos?" />
+        </div>
+        <div class="field">
+          <label for="fWhats">WhatsApp (com DDD)</label>
+          <input id="fWhats" type="tel" inputmode="numeric" autocomplete="tel" placeholder="11 9XXXX-XXXX" />
+        </div>
+
+        <div class="field">
+          <label>Qual a vibe pra essa pessoa?</label>
+          <div class="row-perfil" id="perfilPick">
+            <button type="button" class="pick" data-perfil="idoso" aria-pressed="false"><span class="ic">🕊️</span><span class="t"><b>Serenidade</b></span></button>
+            <button type="button" class="pick" data-perfil="adulto" aria-pressed="true"><span class="ic">🌿</span><span class="t"><b>Dia a dia</b></span></button>
+            <button type="button" class="pick" data-perfil="jovem" aria-pressed="false"><span class="ic">⚡</span><span class="t"><b>Energia</b></span></button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Escolha o plano</label>
+          <div class="plan-pick" id="planPick"><!-- preenchido via JS --></div>
+        </div>
+
+        <div class="msg" id="formMsg"></div>
+        <button class="btn btn-primary" id="goPix">Gerar meu Pix</button>
+        <button class="link-min" id="closeForm">Agora não</button>
+      </div>
+
+      <!-- etapa 2: pix -->
+      <div id="stepPix" class="hidden">
+        <h2>Quase lá! 💛</h2>
+        <p class="lead">Pague o Pix abaixo. A confirmação é automática.</p>
+        <div class="pix-box">
+          <div class="pix-amount" id="pixAmount">R$ 0,01</div>
+          <div class="pix-plan" id="pixPlan"></div>
+          <img id="pixQr" alt="QR Code Pix" />
+        </div>
+        <div class="copia">
+          <input id="pixCode" readonly value="" />
+          <button id="pixCopy">Copiar</button>
+        </div>
+        <div class="await" id="pixAwait"><span class="spinner"></span> Aguardando seu pagamento…</div>
+        <button class="btn btn-primary hidden" id="confirmStub">Já paguei (teste)</button>
+        <button class="link-min" id="closePix">Fechar</button>
+      </div>
+
+      <!-- etapa 3: sucesso -->
+      <div id="stepOk" class="hidden">
+        <div class="ok-emoji">🎉</div>
+        <h2>Assinatura ativa!</h2>
+        <p class="lead">A partir de amanhã sua caixinha surpresa chega todo dia no WhatsApp. Pode fechar e aproveitar. 💛</p>
+        <button class="btn btn-primary" id="okDone">Fechar</button>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -346,11 +467,149 @@ againBtn.addEventListener("click",()=>{ resetar(); setTimeout(abrir,120); });
 box.addEventListener("click",()=>{ if(!box.classList.contains("open")) abrir(); });
 box.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();abrir();} });
 
-document.getElementById("wa").addEventListener("click",e=>{
-  e.preventDefault();
-  // troque pelo número/fluxo da assinatura
-  window.open("https://wa.me/5598984221002?text="+encodeURIComponent("Quero receber minha caixinha todo dia ✨"),"_blank");
+/* ============================================================
+   ASSINATURA — fluxo Pix recorrente.
+   Com API_BASE preenchido: abre o modal, gera Pix no backend e
+   confirma sozinho (polling). Sem backend: cai pro link do WhatsApp.
+============================================================ */
+const WA_FALLBACK = "https://wa.me/5598984221002?text=" +
+  encodeURIComponent("Quero receber minha caixinha todo dia ✨");
+
+const overlay   = document.getElementById("overlay");
+const stepForm  = document.getElementById("stepForm");
+const stepPix   = document.getElementById("stepPix");
+const stepOk    = document.getElementById("stepOk");
+const planPick  = document.getElementById("planPick");
+const perfilPick= document.getElementById("perfilPick");
+const formMsg   = document.getElementById("formMsg");
+const goPix     = document.getElementById("goPix");
+
+let perfilSel = "adulto";
+let planoSel  = null;
+let planosCache = [];
+let pollTimer = null;
+
+const PLANOS_FALLBACK = [
+  { slug:"isca",       nome:"Primeira caixinha",            preco:0.01, destaque:"Experimente por 1 centavo" },
+  { slug:"mensal",     nome:"Caixinha todo dia (mensal)",   preco:9.90, destaque:"Uma surpresa por dia no WhatsApp" },
+  { slug:"trimestral", nome:"Caixinha todo dia (3 meses)",  preco:24.90,destaque:"Economize levando 3 meses" }
+];
+const PLANO_ICON = { isca:"🎁", mensal:"📦", trimestral:"💎" };
+const fmtBRL = (v)=> "R$ " + Number(v).toFixed(2).replace(".", ",");
+
+function abrirModal(){
+  if(!API_BASE){ window.open(WA_FALLBACK,"_blank"); return; }
+  mostrarEtapa("form");
+  carregarPlanos();
+  overlay.classList.add("show"); overlay.setAttribute("aria-hidden","false");
+}
+function fecharModal(){
+  overlay.classList.remove("show"); overlay.setAttribute("aria-hidden","true");
+  if(pollTimer){ clearInterval(pollTimer); pollTimer=null; }
+}
+function mostrarEtapa(e){
+  stepForm.classList.toggle("hidden", e!=="form");
+  stepPix.classList.toggle("hidden",  e!=="pix");
+  stepOk.classList.toggle("hidden",   e!=="ok");
+}
+
+async function carregarPlanos(){
+  if(planosCache.length){ renderPlanos(); return; }
+  try{
+    const r = await fetch(`${API_BASE}/assinatura/planos`);
+    planosCache = r.ok ? await r.json() : PLANOS_FALLBACK;
+  }catch(e){ planosCache = PLANOS_FALLBACK; }
+  renderPlanos();
+}
+function renderPlanos(){
+  planPick.innerHTML = "";
+  planosCache.forEach((p,i)=>{
+    const b = document.createElement("button");
+    b.type="button"; b.className="pick"; b.dataset.slug=p.slug;
+    b.setAttribute("aria-pressed", i===0 ? "true" : "false");
+    if(i===0) planoSel = p.slug;
+    b.innerHTML = `<span class="ic">${PLANO_ICON[p.slug]||"📦"}</span>
+      <span class="t"><b>${p.nome}</b><small>${p.destaque||""}</small></span>
+      <span class="price">${fmtBRL(p.preco)}</span>`;
+    b.addEventListener("click",()=>{
+      planPick.querySelectorAll(".pick").forEach(x=>x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true"); planoSel=p.slug;
+    });
+    planPick.appendChild(b);
+  });
+}
+
+perfilPick.querySelectorAll(".pick").forEach(b=>{
+  b.addEventListener("click",()=>{
+    perfilPick.querySelectorAll(".pick").forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true"); perfilSel=b.dataset.perfil;
+  });
 });
+
+async function gerarPix(){
+  const nome  = document.getElementById("fNome").value.trim();
+  const whats = document.getElementById("fWhats").value.replace(/\D/g,"");
+  formMsg.textContent="";
+  if(whats.length < 10){ formMsg.textContent="Coloque um WhatsApp válido com DDD."; return; }
+  if(!planoSel){ formMsg.textContent="Escolha um plano."; return; }
+
+  goPix.disabled=true; goPix.textContent="Gerando…";
+  try{
+    const r = await fetch(`${API_BASE}/assinatura/criar`,{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ nome, whatsapp:whats, perfil:perfilSel, planoSlug:planoSel })
+    });
+    const data = await r.json();
+    if(!r.ok){ formMsg.textContent=data.erro||"Falha ao gerar o Pix."; return; }
+    mostrarPix(data);
+  }catch(e){
+    formMsg.textContent="Sem conexão com o servidor. Tente de novo.";
+  }finally{
+    goPix.disabled=false; goPix.textContent="Gerar meu Pix";
+  }
+}
+
+function mostrarPix(data){
+  document.getElementById("pixAmount").textContent = fmtBRL(data.valor);
+  document.getElementById("pixPlan").textContent   = data.plano?.nome || "";
+  document.getElementById("pixCode").value         = data.qrCode || "";
+  const qr = document.getElementById("pixQr");
+  if(data.qrCodeBase64){ qr.src = "data:image/png;base64,"+data.qrCodeBase64; qr.classList.remove("hidden"); }
+  else qr.classList.add("hidden");
+  // em modo stub o backend nao tem como receber o Pix real -> botao de teste
+  document.getElementById("confirmStub").classList.toggle("hidden", !data.stub);
+  mostrarEtapa("pix");
+  iniciarPolling(data.assinaturaId);
+}
+
+function iniciarPolling(assinaturaId){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async ()=>{
+    try{
+      const r = await fetch(`${API_BASE}/assinatura/${assinaturaId}/status`);
+      if(!r.ok) return;
+      const s = await r.json();
+      if(s.status==="ativa"){ clearInterval(pollTimer); pollTimer=null; mostrarEtapa("ok"); }
+    }catch(e){ /* tenta de novo no proximo tick */ }
+  }, 3000);
+  document.getElementById("confirmStub").onclick = async ()=>{
+    await fetch(`${API_BASE}/assinatura/${assinaturaId}/confirmar-stub`,{method:"POST"});
+  };
+}
+
+document.getElementById("pixCopy").addEventListener("click",()=>{
+  const inp=document.getElementById("pixCode");
+  navigator.clipboard?.writeText(inp.value);
+  const b=document.getElementById("pixCopy"); const t=b.textContent;
+  b.textContent="Copiado!"; setTimeout(()=>b.textContent=t,1500);
+});
+
+document.getElementById("wa").addEventListener("click",e=>{ e.preventDefault(); abrirModal(); });
+goPix.addEventListener("click",gerarPix);
+document.getElementById("closeForm").addEventListener("click",fecharModal);
+document.getElementById("closePix").addEventListener("click",fecharModal);
+document.getElementById("okDone").addEventListener("click",fecharModal);
+overlay.addEventListener("click",e=>{ if(e.target===overlay) fecharModal(); });
 
 /* estrelinhas */
 const starsEl=document.getElementById("stars");
