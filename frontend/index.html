@@ -342,7 +342,7 @@
 
       <div id="stepForm">
         <h2 id="sheetTitle">Sua caixinha todo dia</h2>
-        <p class="lead">A primeira sai por <b>1 centavo</b>. Depois, uma mensagem por dia no seu WhatsApp.</p>
+        <p class="lead">A estreia é um <b>presente por 1 centavo</b> (uma vez). Depois, uma mensagem todo dia no WhatsApp por menos de <b>R$ 0,33/dia</b>.</p>
 
         <div class="field">
           <label for="fNome">Seu nome</label>
@@ -821,12 +821,19 @@ const formMsg=document.getElementById("formMsg"), goPix=document.getElementById(
 let perfilSel="adulto", planoSel=null, planosCache=[], pollTimer=null;
 
 const PLANOS_FALLBACK = [
-  { slug:"isca",       nome:"Primeira caixinha",            preco:0.01, destaque:"Experimente por 1 centavo" },
-  { slug:"mensal",     nome:"Caixinha todo dia (mensal)",   preco:9.90, destaque:"Uma mensagem por dia no WhatsApp" },
-  { slug:"trimestral", nome:"Caixinha todo dia (3 meses)",  preco:24.90,destaque:"Economize levando 3 meses" }
+  { slug:"isca",       nome:"Presente de estreia",  preco:0.01, periodoDias:1,   destaque:"1 mensagem, só pra experimentar" },
+  { slug:"mensal",     nome:"Todo dia (mensal)",    preco:9.90, periodoDias:30,  destaque:"Uma mensagem por dia no WhatsApp" },
+  { slug:"trimestral", nome:"Todo dia (3 meses)",   preco:24.90,periodoDias:90,  destaque:"Economize 16%" },
+  { slug:"anual",      nome:"Todo dia (1 ano)",     preco:79.90,periodoDias:365, destaque:"Melhor custo — 2 meses grátis" }
 ];
-const PLANO_ICON = { isca:"✶", mensal:"❖", trimestral:"◆" };
+const PLANO_ICON = { isca:"✶", mensal:"❖", trimestral:"◆", anual:"✦" };
 const fmtBRL = (v)=> "R$ " + Number(v).toFixed(2).replace(".", ",");
+// valor por dia (só pra planos recorrentes) — deixa o preço fazer sentido
+function porDia(p){
+  if(!p.periodoDias || p.periodoDias<=1) return "";
+  const v=p.preco/p.periodoDias;
+  return "≈ R$ " + v.toFixed(2).replace(".", ",") + "/dia";
+}
 
 function abrirModal(){
   if(!USE_API){ window.open(WA_FALLBACK,"_blank"); return; }
@@ -855,8 +862,9 @@ function renderPlanos(){
     b.type="button"; b.className="pick"; b.dataset.slug=p.slug;
     b.setAttribute("aria-pressed", i==0?"true":"false");
     if(i==0) planoSel=p.slug;
+    const pd=porDia(p);
     b.innerHTML=`<span class="ic">${PLANO_ICON[p.slug]||"❖"}</span>
-      <span class="t"><b>${p.nome}</b><small>${p.destaque||""}</small></span>
+      <span class="t"><b>${p.nome}</b><small>${p.destaque||""}${pd?" · "+pd:""}</small></span>
       <span class="price">${fmtBRL(p.preco)}</span>`;
     b.addEventListener("click",()=>{
       planPick.querySelectorAll(".pick").forEach(x=>x.setAttribute("aria-pressed","false"));

@@ -76,11 +76,13 @@ const ACERVO = [
   { categoria: 'amor', tipo: 'frase', texto: 'Você é amado mesmo nos dias em que não produz nada.', explicacao: 'Seu valor não está no quanto você faz, mas em quem você é.', pesos: { idoso: 5, adulto: 4, jovem: 3 } },
 ];
 
-// Planos de assinatura. O "isca" de 1 centavo fisga; o lucro vem do mensal.
+// Planos de assinatura. A "isca" e um presente de estreia (uma vez, 1 centavo);
+// a recorrencia e o mensal/trimestral/anual. Valores baixos pra comecar.
 const PLANOS = [
-  { slug: 'isca', nome: 'Primeira caixinha', preco: 0.01, periodoDias: 1, destaque: 'Experimente por 1 centavo' },
-  { slug: 'mensal', nome: 'Caixinha todo dia (mensal)', preco: 9.90, periodoDias: 30, destaque: 'Uma surpresa por dia no seu WhatsApp' },
-  { slug: 'trimestral', nome: 'Caixinha todo dia (3 meses)', preco: 24.90, periodoDias: 90, destaque: 'Economize levando 3 meses' },
+  { slug: 'isca', nome: 'Presente de estreia', preco: 0.01, periodoDias: 1, destaque: '1 mensagem, só pra experimentar' },
+  { slug: 'mensal', nome: 'Todo dia (mensal)', preco: 9.90, periodoDias: 30, destaque: 'Uma mensagem por dia no WhatsApp' },
+  { slug: 'trimestral', nome: 'Todo dia (3 meses)', preco: 24.90, periodoDias: 90, destaque: 'Economize 16%' },
+  { slug: 'anual', nome: 'Todo dia (1 ano)', preco: 79.90, periodoDias: 365, destaque: 'Melhor custo — 2 meses grátis' },
 ];
 
 module.exports = { ACERVO, PLANOS };
