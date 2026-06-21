@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Acervo de caixinhas. `pesos` define a chance por perfil:
+// { "idoso": 6, "adulto": 3, "jovem": 1 }  -> 0 = nao aparece pra aquele perfil
+model Conteudo {
+  id         Int       @id @default(autoincrement())
+  tipo       String    // versiculo | frase | vibe | imagem | gif
+  texto      String
+  referencia String?   // ex: "Salmos 23:1" ou autor
+  emoji      String?   // usado em cards "vibe"
+  mediaUrl   String?   // para imagem/gif (Giphy, CDN, etc.)
+  pesos      Json      // { "idoso": n, "adulto": n, "jovem": n }
+  ativo      Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  entregas   Entrega[]
+}
+
+model Usuario {
+  id              Int       @id @default(autoincrement())
+  nome            String?
+  whatsapp        String?   @unique
+  perfil          String    @default("adulto") // idoso | adulto | jovem
+  assinaturaAtiva Boolean   @default(false)
+  assinaturaAte   DateTime?
+  createdAt       DateTime  @default(now())
+  entregas        Entrega[]
+}
+
+model Entrega {
+  id         Int      @id @default(autoincrement())
+  usuarioId  Int?
+  conteudoId Int
+  canal      String   @default("web") // web | whatsapp
+  createdAt  DateTime @default(now())
+  usuario    Usuario?  @relation(fields: [usuarioId], references: [id])
+  conteudo   Conteudo  @relation(fields: [conteudoId], references: [id])
+}
