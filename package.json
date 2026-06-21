@@ -5,6 +5,6 @@
   "private": true,
   "scripts": {
     "postinstall": "cd backend && npm install && npx prisma generate",
-    "start": "cd backend && npx prisma db push --accept-data-loss && node src/seedSafe.js && npm start"
+    "start": "cd backend && npx prisma db push --accept-data-loss && node src/seed.js && npm start"
   }
 }
