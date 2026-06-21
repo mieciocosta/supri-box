@@ -1,0 +1,21 @@
+{
+  "name": "supri-box-backend",
+  "version": "1.0.0",
+  "description": "Motor de caixinhas surpresa com segmentacao por perfil (Node+Express+Prisma+PostgreSQL)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/seed.js",
+    "prisma:push": "prisma db push",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}
