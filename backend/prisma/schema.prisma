@@ -90,3 +90,13 @@ model Pagamento {
   usuario        Usuario?    @relation(fields: [usuarioId], references: [id])
   assinatura     Assinatura? @relation(fields: [assinaturaId], references: [id])
 }
+
+// Inscricao de push (Web Push) de um dispositivo que instalou o PWA.
+model PushSub {
+  id        Int      @id @default(autoincrement())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  usuarioId Int?
+  createdAt DateTime @default(now())
+}

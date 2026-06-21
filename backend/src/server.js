@@ -8,6 +8,7 @@ const usuarios = require('./routes/usuarios');
 const webhook = require('./routes/webhook');
 const pagamento = require('./routes/pagamento');
 const assinatura = require('./routes/assinatura');
+const push = require('./routes/push');
 const { dispararDiaria, agendarDiaria } = require('./services/entregaDiaria');
 
 const app = express();
@@ -71,6 +72,7 @@ app.use('/usuarios', rateLimit(20, 60000), usuarios);
 app.use('/webhook', webhook);
 app.use('/pagamento', rateLimit(60, 60000), pagamento);
 app.use('/assinatura', rateLimit(20, 60000), assinatura);
+app.use('/push', rateLimit(60, 60000), push);
 
 // Digital Asset Links — prova a posse do dominio pro app TWA (Google Play),
 // pra ele abrir em tela cheia sem a barra de URL. Preencha as variaveis no

@@ -1,6 +1,7 @@
 const prisma = require('../db');
 const { sortear } = require('../sorteio');
 const { enviarWhatsapp, formatarCaixinha } = require('../whatsapp');
+const { enviarPushTodos } = require('../push');
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -77,7 +78,16 @@ async function dispararDiaria({ forcar = false } = {}) {
   }
 
   console.log(`[entrega diaria] ativos=${ativos.length} enviados=${enviados} pulados=${pulados} erros=${erros}`);
-  return { total: ativos.length, enviados, pulados, erros };
+
+  // alem do WhatsApp, notifica quem instalou o app (push) — traz de volta todo dia
+  let pushRes = { enviados: 0 };
+  if (enviados > 0 || forcar) {
+    try {
+      pushRes = await enviarPushTodos({ title: 'SupriBox', body: 'Sua mensagem de hoje chegou ✦', url: '/' });
+    } catch (e) { console.error('[entrega diaria] push', e.message); }
+  }
+
+  return { total: ativos.length, enviados, pulados, erros, push: pushRes.enviados || 0 };
 }
 
 // Agenda a proxima execucao no horario DELIVERY_HOUR (BRT, padrao 8h) e
