@@ -2,10 +2,9 @@ const express = require('express');
 const prisma = require('../db');
 const { criarPix, temToken } = require('../mercadopago');
 const { ativarPagamento } = require('../services/assinaturaService');
+const { validarWhatsapp, validarEmail, validarNome, normalizarPerfil } = require('../validar');
 
 const router = express.Router();
-
-const PERFIS = ['idoso', 'adulto', 'jovem'];
 
 // GET /assinatura/planos  -> lista os planos ativos (ex: isca 1c + mensal)
 router.get('/planos', async (_req, res) => {
@@ -22,20 +21,27 @@ router.get('/planos', async (_req, res) => {
 // devolve o copia-e-cola / QR pro frontend mostrar.
 router.post('/criar', async (req, res) => {
   try {
-    const { whatsapp, nome, email, planoSlug } = req.body;
-    let perfil = (req.body.perfil || 'adulto').toLowerCase();
-    if (!PERFIS.includes(perfil)) perfil = 'adulto';
+    const perfil = normalizarPerfil(req.body.perfil);
 
-    if (!whatsapp) return res.status(400).json({ erro: 'whatsapp e obrigatorio.' });
-    if (!planoSlug) return res.status(400).json({ erro: 'planoSlug e obrigatorio.' });
+    // --- validacao / saneamento ---
+    const whatsapp = validarWhatsapp(req.body.whatsapp);
+    if (!whatsapp) return res.status(400).json({ erro: 'WhatsApp invalido. Use DDD + numero (ex: 11 9XXXX-XXXX).' });
+
+    const nome = validarNome(req.body.nome);
+    if (nome === null) return res.status(400).json({ erro: 'Nome muito curto.' });
+
+    const email = validarEmail(req.body.email); // null se invalido/vazio -> ok, e opcional
+
+    const planoSlug = String(req.body.planoSlug || '').trim().slice(0, 40);
+    if (!planoSlug) return res.status(400).json({ erro: 'Escolha um plano.' });
 
     const plano = await prisma.plano.findUnique({ where: { slug: planoSlug } });
     if (!plano || !plano.ativo) return res.status(404).json({ erro: 'Plano nao encontrado.' });
 
     const usuario = await prisma.usuario.upsert({
       where: { whatsapp },
-      update: { nome, email, perfil },
-      create: { whatsapp, nome, email, perfil },
+      update: { nome: nome || undefined, email: email || undefined, perfil },
+      create: { whatsapp, nome: nome || null, email: email || null, perfil },
     });
 
     const assinatura = await prisma.assinatura.create({
