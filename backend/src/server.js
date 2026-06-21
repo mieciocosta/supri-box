@@ -47,6 +47,8 @@ setInterval(() => {
 
 // health check (Railway aponta o healthcheck pra ca)
 app.get('/health', (_req, res) => res.json({ app: 'SupriBox', status: 'ok' }));
+// marcador de versao -> permite confirmar qual build esta no ar
+app.get('/version', (_req, res) => res.json({ versao: 'v6-categorias-splash-2026-06-21', tipos: 7 }));
 
 // disparo manual da entrega diaria (teste). Protegido por ADMIN_TOKEN.
 // uso: POST /admin/entrega-diaria  header: x-admin-token: <ADMIN_TOKEN>
