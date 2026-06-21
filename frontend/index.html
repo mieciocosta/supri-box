@@ -41,17 +41,18 @@
   }
 
   /* ---- atmosfera: aurora lenta, dessaturada ---- */
-  .aurora{position:fixed;inset:-20%;z-index:0;pointer-events:none;filter:blur(60px);opacity:.55}
+  .aurora{position:fixed;inset:-20%;z-index:0;pointer-events:none;filter:blur(54px);opacity:.5}
+  /* cores fixas (independem da vibe) -> trocar de vibe nao repinta a aurora */
   .aurora b{position:absolute;display:block;border-radius:50%;mix-blend-mode:screen;
-    transition:background 1.2s ease}
+    will-change:transform;backface-visibility:hidden}
   .aurora .a1{width:60vw;height:60vw;left:-10vw;top:-6vh;
-    background:radial-gradient(circle, color-mix(in srgb,var(--accent) 60%,#000) 0%, transparent 66%);
+    background:radial-gradient(circle, #243f3a 0%, transparent 66%);
     animation:drift1 34s ease-in-out infinite}
   .aurora .a2{width:54vw;height:54vw;right:-12vw;top:18vh;
     background:radial-gradient(circle, #2b3553 0%, transparent 66%);
     animation:drift2 42s ease-in-out infinite}
   .aurora .a3{width:48vw;height:48vw;left:18vw;bottom:-14vh;
-    background:radial-gradient(circle, color-mix(in srgb,var(--accent) 30%,#3a2f25) 0%, transparent 66%);
+    background:radial-gradient(circle, #3a3026 0%, transparent 66%);
     animation:drift3 38s ease-in-out infinite}
   @keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6vw,4vh) scale(1.08)}}
   @keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-5vw,5vh) scale(1.1)}}
@@ -246,7 +247,7 @@
   .hidden{display:none!important}
 </style>
 </head>
-<body data-vibe="serenidade">
+<body data-vibe="fe">
   <div class="aurora" aria-hidden="true"><b class="a1"></b><b class="a2"></b><b class="a3"></b></div>
   <canvas id="fx" aria-hidden="true"></canvas>
   <button class="snd" id="snd" aria-label="Ligar ou desligar o som">♪</button>
@@ -259,14 +260,14 @@
     </header>
 
     <div class="vibes" role="group" aria-label="Escolha a vibe">
-      <button class="vibe" data-vibe="serenidade" aria-pressed="true">
-        <span>☾</span>Serenidade<small>versículos & paz</small>
+      <button class="vibe" data-vibe="fe" aria-pressed="true">
+        <span>☾</span>Fé<small>versículos & paz</small>
       </button>
-      <button class="vibe" data-vibe="equilibrio" aria-pressed="false">
-        <span>◐</span>Dia a dia<small>equilíbrio</small>
+      <button class="vibe" data-vibe="foco" aria-pressed="false">
+        <span>◐</span>Foco<small>clareza & equilíbrio</small>
       </button>
-      <button class="vibe" data-vibe="energia" aria-pressed="false">
-        <span>✦</span>Energia<small>frases & foco</small>
+      <button class="vibe" data-vibe="forca" aria-pressed="false">
+        <span>✦</span>Força<small>garra & ânimo</small>
       </button>
     </div>
 
@@ -319,9 +320,9 @@
         <div class="field">
           <label>Qual a vibe pra essa pessoa?</label>
           <div class="row-perfil" id="perfilPick">
-            <button type="button" class="pick" data-perfil="idoso" aria-pressed="false"><span class="ic">☾</span><span class="t"><b>Serenidade</b></span></button>
-            <button type="button" class="pick" data-perfil="adulto" aria-pressed="true"><span class="ic">◐</span><span class="t"><b>Dia a dia</b></span></button>
-            <button type="button" class="pick" data-perfil="jovem" aria-pressed="false"><span class="ic">✦</span><span class="t"><b>Energia</b></span></button>
+            <button type="button" class="pick" data-perfil="idoso" aria-pressed="false"><span class="ic">☾</span><span class="t"><b>Fé</b></span></button>
+            <button type="button" class="pick" data-perfil="adulto" aria-pressed="true"><span class="ic">◐</span><span class="t"><b>Foco</b></span></button>
+            <button type="button" class="pick" data-perfil="jovem" aria-pressed="false"><span class="ic">✦</span><span class="t"><b>Força</b></span></button>
           </div>
         </div>
 
@@ -369,35 +370,45 @@
 const API_BASE = "";
 const USE_API = Boolean(API_BASE) || location.protocol.startsWith("http");
 
-const PERFIL = { serenidade:"idoso", equilibrio:"adulto", energia:"jovem" };
+const PERFIL = { fe:"idoso", foco:"adulto", forca:"jovem" };
 
 /* acento por vibe — paleta dessaturada, premium */
 const ACENTO = {
-  serenidade:{ accent:"#82b09c", deep:"#27433a" },  // eucalipto
-  equilibrio:{ accent:"#c9a77d", deep:"#4a3a26" },  // areia
-  energia:   {  accent:"#d98c74", deep:"#4d2f26" }  // terracota
+  fe:   { accent:"#82b09c", deep:"#27433a" },  // eucalipto
+  foco: { accent:"#c9a77d", deep:"#4a3a26" },  // areia
+  forca:{ accent:"#d98c74", deep:"#4d2f26" }   // terracota
 };
 
 /* acervo local (demo offline) */
 const ACERVO = [
+  // versículos (domínio público) — minoria, dão âncora de fé
   {tipo:"versiculo", texto:"O Senhor é o meu pastor; nada me faltará.", ref:"Salmos 23:1", pesos:{idoso:6,adulto:3,jovem:1}},
-  {tipo:"versiculo", texto:"Tudo posso naquele que me fortalece.", ref:"Filipenses 4:13", pesos:{idoso:5,adulto:4,jovem:3}},
+  {tipo:"versiculo", texto:"Tudo posso naquele que me fortalece.", ref:"Filipenses 4:13", pesos:{idoso:5,adulto:4,jovem:4}},
+  {tipo:"versiculo", texto:"Não temas, porque eu sou contigo.", ref:"Isaías 41:10", pesos:{idoso:6,adulto:4,jovem:3}},
+  {tipo:"versiculo", texto:"Vinde a mim todos os que estais cansados, e eu vos aliviarei.", ref:"Mateus 11:28", pesos:{idoso:6,adulto:4,jovem:2}},
   {tipo:"versiculo", texto:"O choro pode durar uma noite, mas a alegria vem pela manhã.", ref:"Salmos 30:5", pesos:{idoso:6,adulto:3,jovem:1}},
-  {tipo:"versiculo", texto:"Lançando sobre ele toda a vossa ansiedade, porque ele tem cuidado de vós.", ref:"1 Pedro 5:7", pesos:{idoso:6,adulto:4,jovem:2}},
-  {tipo:"versiculo", texto:"Não temas, porque eu sou contigo.", ref:"Isaías 41:10", pesos:{idoso:6,adulto:4,jovem:2}},
-  {tipo:"versiculo", texto:"A tua palavra é lâmpada para os meus pés e luz para o meu caminho.", ref:"Salmos 119:105", pesos:{idoso:5,adulto:3,jovem:1}},
-  {tipo:"versiculo", texto:"Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará.", ref:"Salmos 37:5", pesos:{idoso:5,adulto:4,jovem:2}},
+  // fé & apoio — frases de incentivo com pegada cristã
+  {tipo:"frase", texto:"A fé não tira a tempestade, mas segura a sua mão dentro dela.", ref:"", pesos:{idoso:5,adulto:4,jovem:3}},
+  {tipo:"frase", texto:"Deus não te trouxe até aqui para te abandonar agora.", ref:"", pesos:{idoso:6,adulto:4,jovem:3}},
+  {tipo:"frase", texto:"Respira. O mesmo cuidado que te guardou ontem já está no seu amanhã.", ref:"", pesos:{idoso:6,adulto:4,jovem:2}},
+  {tipo:"frase", texto:"Gratidão transforma o que você tem no que basta.", ref:"", pesos:{idoso:4,adulto:4,jovem:3}},
+  {tipo:"frase", texto:"Você é amado mesmo nos dias em que não produz nada.", ref:"", pesos:{idoso:5,adulto:4,jovem:3}},
+  // foco & disciplina
+  {tipo:"frase", texto:"Comece pequeno, comece imperfeito, mas comece.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
+  {tipo:"frase", texto:"Você não precisa de pressa, precisa de direção.", ref:"", pesos:{idoso:2,adulto:5,jovem:5}},
+  {tipo:"frase", texto:"Disciplina é lembrar do que você quis quando ainda estava inspirado.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
+  {tipo:"frase", texto:"Sua rotina silenciosa de hoje é o milagre que você vai agradecer amanhã.", ref:"", pesos:{idoso:3,adulto:5,jovem:4}},
+  // força & ânimo
+  {tipo:"frase", texto:"Você já sobreviveu a 100% dos seus piores dias. Esse não vai ser diferente.", ref:"", pesos:{idoso:2,adulto:5,jovem:6}},
+  {tipo:"frase", texto:"Coragem não é não ter medo. É caminhar de mãos dadas com ele.", ref:"", pesos:{idoso:2,adulto:5,jovem:5}},
+  {tipo:"frase", texto:"Cai sete vezes, levanta oito. É assim que se constrói gente firme.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
+  {tipo:"frase", texto:"Não desista na curva achando que era o fim da estrada.", ref:"", pesos:{idoso:2,adulto:4,jovem:6}},
+  // carinho / bom dia
   {tipo:"frase", texto:"Bom dia. Que hoje seja leve e cheio de pequenas alegrias.", ref:"", pesos:{idoso:5,adulto:3,jovem:1}},
-  {tipo:"frase", texto:"Você é mais forte do que imagina e mais amado do que pensa.", ref:"", pesos:{idoso:4,adulto:4,jovem:3}},
-  {tipo:"frase", texto:"Você não precisa ter tudo pronto pra começar. Só precisa começar.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
-  {tipo:"frase", texto:"Sua única competição é a pessoa que você foi ontem.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
-  {tipo:"frase", texto:"Coragem não é ausência de medo. É seguir mesmo sentindo ele.", ref:"", pesos:{idoso:2,adulto:5,jovem:5}},
-  {tipo:"frase", texto:"Disciplina é amor próprio em forma de hábito.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
-  {tipo:"frase", texto:"Respira. Você já superou 100% dos seus piores dias.", ref:"", pesos:{idoso:2,adulto:5,jovem:6}},
-  {tipo:"vibe", emoji:"↗", texto:"Modo foco ativado. Hoje é dia de avançar.", ref:"", pesos:{idoso:0,adulto:2,jovem:6}},
-  {tipo:"vibe", emoji:"✦", texto:"Some o orgulho do depois. Faça o que precisa ser feito agora.", ref:"", pesos:{idoso:0,adulto:2,jovem:6}},
-  {tipo:"vibe", emoji:"❖", texto:"Plante hoje a sombra onde você vai descansar amanhã.", ref:"", pesos:{idoso:1,adulto:3,jovem:5}},
-  {tipo:"vibe", emoji:"◆", texto:"Dias difíceis constroem pessoas inquebráveis.", ref:"", pesos:{idoso:1,adulto:3,jovem:6}}
+  {tipo:"frase", texto:"Você é mais forte do que imagina e mais amado do que pensa.", ref:"", pesos:{idoso:4,adulto:4,jovem:4}},
+  // força do dia (símbolo discreto)
+  {tipo:"vibe", emoji:"✦", texto:"Hoje é um bom dia pra começar de novo.", ref:"", pesos:{idoso:1,adulto:3,jovem:6}},
+  {tipo:"vibe", emoji:"◆", texto:"Faça hoje o que o seu futuro vai agradecer.", ref:"", pesos:{idoso:1,adulto:3,jovem:6}}
 ];
 
 let ultimoTexto = null;
@@ -525,7 +536,7 @@ const reveal=document.getElementById("reveal"), hint=document.getElementById("hi
 const openBtn=document.getElementById("openBtn"), againBtn=document.getElementById("againBtn");
 const rTag=document.getElementById("rTag"), rBody=document.getElementById("rBody"),
       rRef=document.getElementById("rRef"), rEmoji=document.getElementById("rEmoji");
-let vibeAtual="serenidade", abrindo=false;
+let vibeAtual="fe", abrindo=false;
 
 const sndBtn=document.getElementById("snd");
 sndBtn.style.opacity = muted ? .5 : 1;
@@ -555,7 +566,7 @@ document.querySelectorAll(".vibe").forEach(btn=>{
   });
 });
 
-const TAGS={versiculo:"Versículo",frase:"Frase",vibe:"Foco do dia"};
+const TAGS={versiculo:"Versículo",frase:"Palavra de hoje",vibe:"Força do dia"};
 
 async function abrir(){
   if(abrindo) return; abrindo=true; openBtn.disabled=true; aud();
