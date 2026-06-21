@@ -6,6 +6,6 @@
   "scripts": {
     "postinstall": "node tools/genIcons.js && cd backend && npm install && npx prisma generate",
     "icons": "node tools/genIcons.js",
-    "start": "cd backend && npx prisma db push --accept-data-loss && node src/seed.js && npm start"
+    "start": "cd backend && (npx prisma db push --accept-data-loss && node src/seed.js || echo '[start] aviso: migracao/seed falhou, subindo o servidor mesmo assim') ; node src/server.js"
   }
 }
