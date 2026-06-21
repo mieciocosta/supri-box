@@ -1,7 +1,7 @@
 /* SupriBox service worker — instalável (PWA) e base do app TWA (Google Play).
    Estratégia: navegação = network-first (conteúdo sempre fresco) com fallback
    offline ao shell; estáticos = cache-first; API = sempre rede (nunca cacheia). */
-const CACHE = 'supribox-v3';
+const CACHE = 'supribox-v4';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 const API = /^\/(caixinha|assinatura|pagamento|usuarios|conteudos|webhook|health)\b/;
 

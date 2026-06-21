@@ -156,7 +156,8 @@
   .reveal{position:relative;z-index:4;width:100%;max-width:354px;background:var(--surface);
     color:var(--surface-ink);border-radius:var(--radius);padding:36px 30px 32px;text-align:center;
     overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.7),0 2px 0 rgba(255,255,255,.5) inset;
-    opacity:0;transform:translateY(30px) scale(.97);pointer-events:none;display:none}
+    opacity:0;transform:translateY(30px) scale(.97);pointer-events:none;display:none;
+    transition:opacity .26s var(--soft),transform .26s var(--soft)}
   .reveal.show{display:block;opacity:1;transform:translateY(0) scale(1);pointer-events:auto;
     animation:rise .9s var(--spring)}
   @keyframes rise{0%{opacity:0;transform:translateY(34px) scale(.95)}100%{opacity:1;transform:translateY(0) scale(1)}}
@@ -177,8 +178,19 @@
   .reveal.tipo-frase .body{font-family:"Inter",sans-serif;font-weight:600;font-size:22px;line-height:1.4;letter-spacing:-.01em}
   .reveal.tipo-vibe .body{font-family:"Fraunces",serif;font-style:italic;font-weight:500}
   .reveal .ref{margin-top:20px;font-size:12.5px;font-weight:500;color:var(--surface-sub);letter-spacing:.02em}
+  /* breve explicação da mensagem */
+  .reveal .explic{margin-top:18px;padding-top:16px;font-size:14px;line-height:1.5;
+    font-weight:400;color:#6c6456;position:relative;display:none}
+  .reveal .explic::before{content:"";position:absolute;top:0;left:50%;translate:-50% 0;
+    width:34px;height:1px;background:var(--accent);opacity:.6}
+  /* re-sorteio suave: troca o conteúdo sem reabrir o orbe */
+  .reveal.swapping{opacity:0;transform:translateY(10px) scale(.99)}
 
   .actions{display:flex;flex-direction:column;align-items:center;gap:12px;z-index:2}
+  .post{display:flex;flex-direction:column;align-items:center;gap:11px;width:100%}
+  .post .row{display:flex;gap:10px;width:100%;max-width:354px}
+  .post .row .btn{margin:0}
+  .btn .ic{font-size:16px}
   .daily{font-size:12px;color:var(--muted);letter-spacing:.02em;text-align:center;line-height:1.5}
   footer .legal{margin-top:8px}
   footer .legal a{color:var(--muted);text-decoration:none;font-size:11px;opacity:.8}
@@ -298,13 +310,19 @@
         <span class="emoji" id="rEmoji"></span>
         <div class="body" id="rBody"></div>
         <div class="ref" id="rRef"></div>
+        <div class="explic" id="rExplic"></div>
       </div>
     </div>
 
     <div class="actions">
-      <div class="daily" id="daily" style="display:none">✦ Sua mensagem de hoje — volte amanhã para a próxima</div>
       <button class="btn btn-primary" id="openBtn">Revelar a caixinha</button>
-      <button class="btn btn-ghost" id="againBtn" style="display:none">Receber todo dia →</button>
+      <div class="post" id="post" style="display:none">
+        <div class="row">
+          <button class="btn btn-ghost" id="againBtn"><span class="ic">✦</span> Outra</button>
+          <button class="btn btn-primary" id="shareBtn"><span class="ic">📤</span> Compartilhar</button>
+        </div>
+        <button class="link-min" id="subBtn">Receber todo dia no WhatsApp →</button>
+      </div>
     </div>
 
     <footer>
@@ -394,36 +412,36 @@ const ACENTO = {
   forca:{ accent:"#d98c74", deep:"#4d2f26" }   // terracota
 };
 
-/* acervo local (demo offline) */
+/* acervo local (demo offline) — espelha o backend (seedData.js) */
 const ACERVO = [
   // versículos (domínio público) — minoria, dão âncora de fé
-  {tipo:"versiculo", texto:"O Senhor é o meu pastor; nada me faltará.", ref:"Salmos 23:1", pesos:{idoso:6,adulto:3,jovem:1}},
-  {tipo:"versiculo", texto:"Tudo posso naquele que me fortalece.", ref:"Filipenses 4:13", pesos:{idoso:5,adulto:4,jovem:4}},
-  {tipo:"versiculo", texto:"Não temas, porque eu sou contigo.", ref:"Isaías 41:10", pesos:{idoso:6,adulto:4,jovem:3}},
-  {tipo:"versiculo", texto:"Vinde a mim todos os que estais cansados, e eu vos aliviarei.", ref:"Mateus 11:28", pesos:{idoso:6,adulto:4,jovem:2}},
-  {tipo:"versiculo", texto:"O choro pode durar uma noite, mas a alegria vem pela manhã.", ref:"Salmos 30:5", pesos:{idoso:6,adulto:3,jovem:1}},
+  {tipo:"versiculo", texto:"O Senhor é o meu pastor; nada me faltará.", ref:"Salmos 23:1", exp:"Um lembrete de que você é cuidado: o essencial não vai te faltar hoje.", pesos:{idoso:6,adulto:3,jovem:1}},
+  {tipo:"versiculo", texto:"Tudo posso naquele que me fortalece.", ref:"Filipenses 4:13", exp:"Sua força não depende só de você — há uma fonte maior te sustentando.", pesos:{idoso:5,adulto:4,jovem:4}},
+  {tipo:"versiculo", texto:"Não temas, porque eu sou contigo.", ref:"Isaías 41:10", exp:"Você não enfrenta o dia sozinho; a coragem nasce de se sentir acompanhado.", pesos:{idoso:6,adulto:4,jovem:3}},
+  {tipo:"versiculo", texto:"Vinde a mim todos os que estais cansados, e eu vos aliviarei.", ref:"Mateus 11:28", exp:"Descanso é permitido. Parar pra respirar também é um ato de fé.", pesos:{idoso:6,adulto:4,jovem:2}},
+  {tipo:"versiculo", texto:"O choro pode durar uma noite, mas a alegria vem pela manhã.", ref:"Salmos 30:5", exp:"A dor de hoje tem prazo; dias melhores fazem parte do caminho.", pesos:{idoso:6,adulto:3,jovem:1}},
   // fé & apoio — frases de incentivo com pegada cristã
-  {tipo:"frase", texto:"A fé não tira a tempestade, mas segura a sua mão dentro dela.", ref:"", pesos:{idoso:5,adulto:4,jovem:3}},
-  {tipo:"frase", texto:"Deus não te trouxe até aqui para te abandonar agora.", ref:"", pesos:{idoso:6,adulto:4,jovem:3}},
-  {tipo:"frase", texto:"Respira. O mesmo cuidado que te guardou ontem já está no seu amanhã.", ref:"", pesos:{idoso:6,adulto:4,jovem:2}},
-  {tipo:"frase", texto:"Gratidão transforma o que você tem no que basta.", ref:"", pesos:{idoso:4,adulto:4,jovem:3}},
-  {tipo:"frase", texto:"Você é amado mesmo nos dias em que não produz nada.", ref:"", pesos:{idoso:5,adulto:4,jovem:3}},
+  {tipo:"frase", texto:"A fé não tira a tempestade, mas segura a sua mão dentro dela.", ref:"", exp:"Acreditar não acaba com os problemas, mas te dá firmeza pra atravessá-los.", pesos:{idoso:5,adulto:4,jovem:3}},
+  {tipo:"frase", texto:"Deus não te trouxe até aqui para te abandonar agora.", ref:"", exp:"Olhe pra trás: você já superou muito. Esse capítulo também vai passar.", pesos:{idoso:6,adulto:4,jovem:3}},
+  {tipo:"frase", texto:"Respira. O mesmo cuidado que te guardou ontem já está no seu amanhã.", ref:"", exp:"A proteção que te trouxe até aqui continua com você adiante.", pesos:{idoso:6,adulto:4,jovem:2}},
+  {tipo:"frase", texto:"Gratidão transforma o que você tem no que basta.", ref:"", exp:"Reparar no que já é bom muda o jeito como o dia inteiro te afeta.", pesos:{idoso:4,adulto:4,jovem:3}},
+  {tipo:"frase", texto:"Você é amado mesmo nos dias em que não produz nada.", ref:"", exp:"Seu valor não está no quanto você faz, mas em quem você é.", pesos:{idoso:5,adulto:4,jovem:3}},
   // foco & disciplina
-  {tipo:"frase", texto:"Comece pequeno, comece imperfeito, mas comece.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
-  {tipo:"frase", texto:"Você não precisa de pressa, precisa de direção.", ref:"", pesos:{idoso:2,adulto:5,jovem:5}},
-  {tipo:"frase", texto:"Disciplina é lembrar do que você quis quando ainda estava inspirado.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
-  {tipo:"frase", texto:"Sua rotina silenciosa de hoje é o milagre que você vai agradecer amanhã.", ref:"", pesos:{idoso:3,adulto:5,jovem:4}},
+  {tipo:"frase", texto:"Comece pequeno, comece imperfeito, mas comece.", ref:"", exp:"Não espere o momento perfeito; o primeiro passo imperfeito já te move.", pesos:{idoso:1,adulto:4,jovem:6}},
+  {tipo:"frase", texto:"Você não precisa de pressa, precisa de direção.", ref:"", exp:"Saber pra onde vai vale mais do que correr sem rumo.", pesos:{idoso:2,adulto:5,jovem:5}},
+  {tipo:"frase", texto:"Disciplina é lembrar do que você quis quando ainda estava inspirado.", ref:"", exp:"Nos dias sem vontade, é a disciplina que honra o sonho que você teve.", pesos:{idoso:1,adulto:4,jovem:6}},
+  {tipo:"frase", texto:"Sua rotina silenciosa de hoje é o milagre que você vai agradecer amanhã.", ref:"", exp:"O esforço discreto de agora constrói a vitória que ainda vai chegar.", pesos:{idoso:3,adulto:5,jovem:4}},
   // força & ânimo
-  {tipo:"frase", texto:"Você já sobreviveu a 100% dos seus piores dias. Esse não vai ser diferente.", ref:"", pesos:{idoso:2,adulto:5,jovem:6}},
-  {tipo:"frase", texto:"Coragem não é não ter medo. É caminhar de mãos dadas com ele.", ref:"", pesos:{idoso:2,adulto:5,jovem:5}},
-  {tipo:"frase", texto:"Cai sete vezes, levanta oito. É assim que se constrói gente firme.", ref:"", pesos:{idoso:1,adulto:4,jovem:6}},
-  {tipo:"frase", texto:"Não desista na curva achando que era o fim da estrada.", ref:"", pesos:{idoso:2,adulto:4,jovem:6}},
+  {tipo:"frase", texto:"Você já sobreviveu a 100% dos seus piores dias. Esse não vai ser diferente.", ref:"", exp:"Seu histórico prova que você é capaz de atravessar isso também.", pesos:{idoso:2,adulto:5,jovem:6}},
+  {tipo:"frase", texto:"Coragem não é não ter medo. É caminhar de mãos dadas com ele.", ref:"", exp:"Sentir medo é normal; agir mesmo assim é o que te faz corajoso.", pesos:{idoso:2,adulto:5,jovem:5}},
+  {tipo:"frase", texto:"Cai sete vezes, levanta oito. É assim que se constrói gente firme.", ref:"", exp:"O que te define não é cair, é a teimosia de levantar de novo.", pesos:{idoso:1,adulto:4,jovem:6}},
+  {tipo:"frase", texto:"Não desista na curva achando que era o fim da estrada.", ref:"", exp:"Às vezes o que parece um beco é só uma curva antes da reta boa.", pesos:{idoso:2,adulto:4,jovem:6}},
   // carinho / bom dia
-  {tipo:"frase", texto:"Bom dia. Que hoje seja leve e cheio de pequenas alegrias.", ref:"", pesos:{idoso:5,adulto:3,jovem:1}},
-  {tipo:"frase", texto:"Você é mais forte do que imagina e mais amado do que pensa.", ref:"", pesos:{idoso:4,adulto:4,jovem:4}},
+  {tipo:"frase", texto:"Bom dia. Que hoje seja leve e cheio de pequenas alegrias.", ref:"", exp:"Um respiro de carinho pra começar o dia com o coração mais leve.", pesos:{idoso:5,adulto:3,jovem:1}},
+  {tipo:"frase", texto:"Você é mais forte do que imagina e mais amado do que pensa.", ref:"", exp:"Nos dias difíceis, você tem mais reservas e mais gente do que acredita.", pesos:{idoso:4,adulto:4,jovem:4}},
   // força do dia (símbolo discreto)
-  {tipo:"vibe", emoji:"✦", texto:"Hoje é um bom dia pra começar de novo.", ref:"", pesos:{idoso:1,adulto:3,jovem:6}},
-  {tipo:"vibe", emoji:"◆", texto:"Faça hoje o que o seu futuro vai agradecer.", ref:"", pesos:{idoso:1,adulto:3,jovem:6}}
+  {tipo:"vibe", emoji:"✦", texto:"Hoje é um bom dia pra começar de novo.", ref:"", exp:"Todo amanhecer é uma chance limpa de recomeçar — aproveite essa.", pesos:{idoso:1,adulto:3,jovem:6}},
+  {tipo:"vibe", emoji:"◆", texto:"Faça hoje o que o seu futuro vai agradecer.", ref:"", exp:"Pequenas escolhas de hoje são presentes pro você de amanhã.", pesos:{idoso:1,adulto:3,jovem:6}}
 ];
 
 let ultimoTexto = null;
@@ -442,6 +460,9 @@ async function sortear(perfil){
   }
   return sortearLocal(perfil);
 }
+/* normaliza campos vindos da API (referencia/explicacao) ou do acervo local (ref/exp) */
+function refDe(it){ return it.ref || it.referencia || ""; }
+function expDe(it){ return it.exp || it.explicacao || ""; }
 
 const motionOK = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
@@ -451,7 +472,7 @@ const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
    Nada de bipe de arcade: ataque lento, filtro suave, espaço.
 ============================================================ */
 let actx=null, master=null, echo=null;
-let muted = localStorage.getItem("sb_mute")==="1";
+let muted = localStorage.getItem("sb_mute")=="1";
 function aud(){
   if(!actx){
     const AC = window.AudioContext||window.webkitAudioContext; if(!AC) return null;
@@ -464,7 +485,7 @@ function aud(){
     const wet = actx.createGain(); wet.gain.value=0.3;
     echo.connect(tone); tone.connect(fb); fb.connect(echo); tone.connect(wet); wet.connect(master);
   }
-  if(actx.state==="suspended") actx.resume();
+  if(actx.state=="suspended") actx.resume();
   return actx;
 }
 function voz(freq, t, {dur=1.8, type="sine", vol=.12, detune=0, attack=.28}={}){
@@ -549,9 +570,12 @@ const bloomEl=document.getElementById("bloom");
 const orb=document.getElementById("orb"), stage=document.getElementById("stage");
 const reveal=document.getElementById("reveal"), hint=document.getElementById("hint");
 const openBtn=document.getElementById("openBtn"), againBtn=document.getElementById("againBtn");
+const shareBtn=document.getElementById("shareBtn"), subBtn=document.getElementById("subBtn");
+const postEl=document.getElementById("post");
 const rTag=document.getElementById("rTag"), rBody=document.getElementById("rBody"),
-      rRef=document.getElementById("rRef"), rEmoji=document.getElementById("rEmoji");
-let vibeAtual="fe", abrindo=false;
+      rRef=document.getElementById("rRef"), rEmoji=document.getElementById("rEmoji"),
+      rExplic=document.getElementById("rExplic");
+let vibeAtual="fe", abrindo=false, itemAtual=null;
 
 const sndBtn=document.getElementById("snd");
 sndBtn.style.opacity = muted ? .5 : 1;
@@ -582,24 +606,32 @@ document.querySelectorAll(".vibe").forEach(btn=>{
 });
 
 const TAGS={versiculo:"Versículo",frase:"Palavra de hoje",vibe:"Força do dia"};
-const dailyEl=document.getElementById("daily");
-
-/* "Mensagem do dia": uma por vibe por dia, persistente. Reabrir mostra a mesma;
-   muda de verdade só amanhã. Cria o ritual diário e o funil pra assinatura. */
-function hojeKey(){ const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
-function msgDoDia(vibe){ try{ const v=localStorage.getItem("sb_msg_"+vibe+"_"+hojeKey()); return v?JSON.parse(v):null; }catch(e){ return null; } }
-function salvarMsg(vibe,item){ try{ localStorage.setItem("sb_msg_"+vibe+"_"+hojeKey(), JSON.stringify(item)); }catch(e){} }
 
 let runId=0; // cancela aberturas em andamento -> corrige o bug ao trocar de vibe no meio
+
+/* preenche o card com o conteúdo (compartilhado entre abertura e re-sorteio) */
+function preencherCard(item){
+  itemAtual=item;
+  const rich = Math.random() < 0.18; // brilho sutilmente mais rico (sem rótulo)
+  reveal.classList.remove("tipo-versiculo","tipo-frase","tipo-vibe");
+  reveal.classList.add("tipo-"+item.tipo);
+  reveal.classList.toggle("rich",rich);
+  rTag.textContent = TAGS[item.tipo]||"Mensagem";
+  rBody.textContent = item.texto;
+  if(item.emoji){ rEmoji.style.display="block"; rEmoji.textContent=item.emoji; } else rEmoji.style.display="none";
+  const ref=refDe(item);
+  if(ref){ rRef.style.display="block"; rRef.textContent="— "+ref; } else rRef.style.display="none";
+  const ex=expDe(item);
+  if(ex){ rExplic.style.display="block"; rExplic.textContent=ex; } else rExplic.style.display="none";
+  return rich;
+}
 
 async function abrir(){
   if(abrindo) return; abrindo=true; openBtn.disabled=true; aud();
   const myRun=++runId;
 
-  let item = msgDoDia(vibeAtual);
-  if(!item){ item = await sortear(PERFIL[vibeAtual]); if(item) salvarMsg(vibeAtual,item); }
-  if(myRun!==runId) return; // trocou de vibe enquanto buscava -> aborta limpo
-  const rich = Math.random() < 0.18; // brilho sutilmente mais rico (sem rótulo)
+  const item = await sortear(PERFIL[vibeAtual]); // sempre fresco (sem trava diária)
+  if(myRun!==runId || !item) return; // trocou de vibe enquanto buscava -> aborta limpo
 
   // 1) inspira
   orb.classList.add("opening");
@@ -610,6 +642,7 @@ async function abrir(){
   // 2) floresce — orbe se dissolve, luz suave, motes sobem
   orb.classList.remove("opening"); orb.classList.add("open");
   bloomEl.classList.remove("go"); void bloomEl.offsetWidth; bloomEl.classList.add("go");
+  const rich = preencherCard(item);
   motes(rich ? 24 : 15);
   somRevelar(rich);
   if(navigator.vibrate) try{navigator.vibrate(rich?[10,40,12]:[10])}catch(e){}
@@ -619,14 +652,26 @@ async function abrir(){
   if(myRun!==runId) return;
 
   // 3) revela
-  reveal.className = "reveal tipo-"+item.tipo+(rich?" rich":"")+" show";
-  rTag.textContent = TAGS[item.tipo]||"Mensagem";
-  rBody.textContent = item.texto;
-  if(item.emoji){ rEmoji.style.display="block"; rEmoji.textContent=item.emoji; } else rEmoji.style.display="none";
-  if(item.ref){ rRef.style.display="block"; rRef.textContent="— "+item.ref; } else rRef.style.display="none";
-  openBtn.style.display="none"; againBtn.style.display="block"; dailyEl.style.display="block";
+  reveal.classList.add("show");
+  openBtn.style.display="none"; postEl.style.display="flex";
 
   abrindo=false; openBtn.disabled=false;
+}
+
+/* "Outra": re-sorteia sem reabrir o orbe — troca suave do conteúdo do card */
+async function outra(){
+  if(abrindo) return; abrindo=true; againBtn.disabled=true;
+  const myRun=++runId;
+  const item = await sortear(PERFIL[vibeAtual]);
+  if(myRun!==runId || !item){ abrindo=false; againBtn.disabled=false; return; }
+  reveal.classList.add("swapping");
+  await wait(motionOK ? 250 : 30);
+  if(myRun!==runId){ abrindo=false; againBtn.disabled=false; return; }
+  preencherCard(item);
+  reveal.classList.remove("swapping");
+  motes(12); somRevelar(false);
+  if(navigator.vibrate) try{navigator.vibrate(6)}catch(e){}
+  abrindo=false; againBtn.disabled=false;
 }
 
 function resetar(){
@@ -635,13 +680,112 @@ function resetar(){
   reveal.className="reveal";
   hint.classList.remove("gone");
   openBtn.style.display="block"; openBtn.disabled=false;
-  againBtn.style.display="none"; dailyEl.style.display="none";
+  postEl.style.display="none";
   abrindo=false;
 }
 
 openBtn.addEventListener("click",abrir);
-againBtn.addEventListener("click",()=>{ ativarPush(); abrirModal(); }); // assinatura + ativa notificacoes
+againBtn.addEventListener("click",outra);
+shareBtn.addEventListener("click",()=>{ if(itemAtual) compartilhar(itemAtual); });
+subBtn.addEventListener("click",()=>{ ativarPush(); abrirModal(); }); // assinatura + ativa notificacoes
 orb.addEventListener("click",()=>{ if(!orb.classList.contains("open") && !abrindo) abrir(); });
+
+/* ============================================================
+   COMPARTILHAR — gera uma imagem bonita (formato status 9:16)
+   com a frase, a explicação e a marca, e abre o compartilhamento
+   nativo (WhatsApp status, etc). Sem libs, tudo em canvas.
+============================================================ */
+function hexA(hex,a){
+  const h=hex.replace("#",""); const n=parseInt(h,16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+function wrapLines(x,text,maxW){
+  const words=text.split(" "); const lines=[]; let line="";
+  for(const w of words){ const t=line?line+" "+w:w;
+    if(x.measureText(t).width>maxW && line){ lines.push(line); line=w; } else line=t; }
+  if(line) lines.push(line); return lines;
+}
+async function gerarImagemBlob(item){
+  try{ await document.fonts.ready; }catch(e){}
+  const W=1080,H=1920,P=120;
+  const c=document.createElement("canvas"); c.width=W; c.height=H;
+  const x=c.getContext("2d"); x.textAlign="center";
+  const ac=ACENTO[vibeAtual];
+
+  // fundo: gradiente diagonal escuro com o tom da vibe
+  const g=x.createLinearGradient(0,0,W*0.35,H);
+  g.addColorStop(0,"#0e1116"); g.addColorStop(.55,ac.deep); g.addColorStop(1,"#090c10");
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  // brilho suave no alto-centro
+  const rg=x.createRadialGradient(W*0.5,H*0.40,0,W*0.5,H*0.40,W*0.85);
+  rg.addColorStop(0,hexA(ac.accent,0.30)); rg.addColorStop(.45,hexA(ac.accent,0.06)); rg.addColorStop(1,"rgba(0,0,0,0)");
+  x.fillStyle=rg; x.fillRect(0,0,W,H);
+
+  // topo: marca + símbolo + tag
+  const space=(s)=>s.split("").join(" ");
+  x.fillStyle=hexA("#ffffff",0.62); x.font="600 30px Inter,sans-serif";
+  x.fillText(space("SUPRIBOX"), W/2, 150);
+  const sym={fe:"☾",foco:"◐",forca:"✦"}[vibeAtual]||"✦";
+  x.fillStyle=ac.accent; x.font="500 64px Inter,sans-serif"; x.fillText(sym, W/2, 260);
+  x.fillStyle=hexA(ac.accent,0.95); x.font="600 25px Inter,sans-serif";
+  x.fillText(space((TAGS[item.tipo]||"Mensagem").toUpperCase()), W/2, 335);
+
+  // frase central
+  const isFrase=item.tipo=="frase";
+  const fraseFont= isFrase ? "600 62px Inter,sans-serif" : "italic 500 70px 'Fraunces',Georgia,serif";
+  x.font=fraseFont;
+  const lines=wrapLines(x, item.texto, W-2*P);
+  const lh= isFrase?84:94;
+  const totalH=lines.length*lh;
+  const blockTop=H*0.45 - totalH/2;
+  // aspas decorativas
+  x.fillStyle=hexA(ac.accent,0.45); x.font="500 150px 'Fraunces',Georgia,serif";
+  x.fillText("“", W/2, blockTop-6);
+  // texto
+  x.fillStyle="#f4f1ea"; x.font=fraseFont;
+  let y=blockTop+lh*0.85;
+  for(const ln of lines){ x.fillText(ln, W/2, y); y+=lh; }
+
+  // referência
+  const ref=refDe(item);
+  if(ref){ x.fillStyle=hexA(ac.accent,0.95); x.font="500 30px Inter,sans-serif"; y+=18; x.fillText("— "+ref, W/2, y); y+=24; }
+
+  // explicação (com fiozinho)
+  const ex=expDe(item);
+  if(ex){
+    let ey=Math.max(y+90, H*0.70);
+    x.strokeStyle=hexA(ac.accent,0.45); x.lineWidth=2;
+    x.beginPath(); x.moveTo(W/2-42,ey-50); x.lineTo(W/2+42,ey-50); x.stroke();
+    x.fillStyle=hexA("#ffffff",0.66); x.font="400 33px Inter,sans-serif";
+    for(const ln of wrapLines(x, ex, W-2*P-30)){ x.fillText(ln, W/2, ey); ey+=46; }
+  }
+
+  // rodapé: chamada
+  x.fillStyle=hexA("#ffffff",0.5); x.font="400 27px Inter,sans-serif";
+  x.fillText("sua dose diária de fé, foco e força", W/2, H-128);
+  x.fillStyle=hexA(ac.accent,0.92); x.font="600 30px Inter,sans-serif";
+  x.fillText("supribox", W/2, H-82);
+
+  return await new Promise((res)=> c.toBlob(res,"image/png",0.95));
+}
+async function compartilhar(item){
+  const orig=shareBtn.innerHTML; shareBtn.disabled=true; shareBtn.innerHTML='<span class="ic">⏳</span> Gerando…';
+  try{
+    const blob=await gerarImagemBlob(item);
+    const file=new File([blob],"supribox.png",{type:"image/png"});
+    const txt=`"${item.texto}"\n\n✦ SupriBox — sua dose diária\n${location.origin}`;
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], text:txt});
+    }else if(navigator.share){
+      await navigator.share({text:txt});
+    }else{
+      const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+      a.download="supribox.png"; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    }
+  }catch(e){ /* usuário cancelou ou sem suporte */ }
+  finally{ shareBtn.disabled=false; shareBtn.innerHTML=orig; }
+}
 
 /* ============================================================
    ASSINATURA — fluxo Pix (igual ao backend já no ar).
@@ -674,9 +818,9 @@ function fecharModal(){
   if(pollTimer){ clearInterval(pollTimer); pollTimer=null; }
 }
 function mostrarEtapa(e){
-  stepForm.classList.toggle("hidden", e!=="form");
-  stepPix.classList.toggle("hidden",  e!=="pix");
-  stepOk.classList.toggle("hidden",   e!=="ok");
+  stepForm.classList.toggle("hidden", e!="form");
+  stepPix.classList.toggle("hidden",  e!="pix");
+  stepOk.classList.toggle("hidden",   e!="ok");
 }
 async function carregarPlanos(){
   if(planosCache.length){ renderPlanos(); return; }
@@ -689,8 +833,8 @@ function renderPlanos(){
   planosCache.forEach((p,i)=>{
     const b=document.createElement("button");
     b.type="button"; b.className="pick"; b.dataset.slug=p.slug;
-    b.setAttribute("aria-pressed", i===0?"true":"false");
-    if(i===0) planoSel=p.slug;
+    b.setAttribute("aria-pressed", i==0?"true":"false");
+    if(i==0) planoSel=p.slug;
     b.innerHTML=`<span class="ic">${PLANO_ICON[p.slug]||"❖"}</span>
       <span class="t"><b>${p.nome}</b><small>${p.destaque||""}</small></span>
       <span class="price">${fmtBRL(p.preco)}</span>`;
@@ -710,10 +854,10 @@ perfilPick.querySelectorAll(".pick").forEach(b=>{
 async function gerarPix(){
   const nome=document.getElementById("fNome").value.trim().slice(0,60);
   let whats=document.getElementById("fWhats").value.replace(/\D/g,"");
-  if((whats.length===13||whats.length===12)&&whats.startsWith("55")) whats=whats.slice(2);
+  if((whats.length==13||whats.length==12)&&whats.startsWith("55")) whats=whats.slice(2);
   formMsg.textContent="";
   if(whats.length<10||whats.length>11){ formMsg.textContent="WhatsApp inválido. Use DDD + número (ex: 11 9XXXX-XXXX)."; return; }
-  if(whats.length===11&&whats[2]!=="9"){ formMsg.textContent="Confira o número: celular tem o 9 após o DDD."; return; }
+  if(whats.length==11&&whats[2]!="9"){ formMsg.textContent="Confira o número: celular tem o 9 após o DDD."; return; }
   if(!planoSel){ formMsg.textContent="Escolha um plano."; return; }
   goPix.disabled=true; goPix.textContent="Gerando…";
   try{
@@ -744,7 +888,7 @@ function iniciarPolling(assinaturaId){
       const r=await fetch(`${API_BASE}/assinatura/${assinaturaId}/status`);
       if(!r.ok) return;
       const s=await r.json();
-      if(s.status==="ativa"){
+      if(s.status=="ativa"){
         clearInterval(pollTimer); pollTimer=null;
         mostrarEtapa("ok"); motes(26); somRevelar(true);
       }
@@ -765,7 +909,7 @@ goPix.addEventListener("click",gerarPix);
 document.getElementById("closeForm").addEventListener("click",fecharModal);
 document.getElementById("closePix").addEventListener("click",fecharModal);
 document.getElementById("okDone").addEventListener("click",fecharModal);
-overlay.addEventListener("click",e=>{ if(e.target===overlay) fecharModal(); });
+overlay.addEventListener("click",e=>{ if(e.target==overlay) fecharModal(); });
 
 /* PWA — service worker + push (notificações) */
 function urlB64ToUint8(b){
@@ -778,9 +922,9 @@ function urlB64ToUint8(b){
 async function ativarPush(){
   try{
     if(!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
-    if(Notification.permission==="denied") return;
-    if(Notification.permission!=="granted"){
-      const p=await Notification.requestPermission(); if(p!=="granted") return;
+    if(Notification.permission=="denied") return;
+    if(Notification.permission!="granted"){
+      const p=await Notification.requestPermission(); if(p!="granted") return;
     }
     const reg=await navigator.serviceWorker.ready;
     let sub=await reg.pushManager.getSubscription();
@@ -795,7 +939,7 @@ async function ativarPush(){
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("/sw.js")
-      .then(()=>{ if(window.Notification && Notification.permission==="granted") ativarPush(); })
+      .then(()=>{ if(window.Notification && Notification.permission=="granted") ativarPush(); })
       .catch(()=>{});
   });
 }
