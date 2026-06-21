@@ -43,6 +43,26 @@
     animation:twinkle 4s var(--ease) infinite}
   @keyframes twinkle{0%,100%{opacity:0;transform:scale(.6)}50%{opacity:.65;transform:scale(1)}}
 
+  /* canvas de partículas (confete/moedas) + flash de tela */
+  #fx{position:fixed;inset:0;pointer-events:none;z-index:40}
+  .flash{position:fixed;inset:0;pointer-events:none;z-index:39;opacity:0;
+    background:radial-gradient(circle at 50% 44%, #fff 0%, rgba(255,231,160,.7) 40%, transparent 72%)}
+  .flash.go{animation:flashGo .62s var(--ease)}
+  @keyframes flashGo{0%{opacity:0}10%{opacity:var(--flash,.5)}100%{opacity:0}}
+
+  /* toggle de som + chip de sequência */
+  .hud-btn{position:fixed;top:max(14px,env(safe-area-inset-top));z-index:22;height:38px;
+    border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:var(--cream);
+    cursor:pointer;font-family:inherit;border-radius:999px;backdrop-filter:blur(6px);transition:.2s var(--ease)}
+  .hud-btn:active{transform:scale(.94)}
+  .snd{left:14px;width:38px;font-size:16px}
+  .streak{right:14px;display:flex;align-items:center;gap:6px;padding:0 14px;font-size:13px;font-weight:700;
+    opacity:0;transform:translateY(-8px);pointer-events:none}
+  .streak.show{opacity:1;transform:translateY(0)}
+  .streak .fire{filter:drop-shadow(0 0 7px #ff8a3d)}
+  .streak.bump{animation:bump .42s var(--ease)}
+  @keyframes bump{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(0) scale(1.28)}}
+
   .shell{width:100%;max-width:440px;position:relative;z-index:1;
     display:flex;flex-direction:column;flex:1;gap:22px}
 
@@ -68,8 +88,20 @@
   .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
     position:relative;min-height:300px}
 
+  /* raios de luz por trás da caixinha (sunburst) */
+  .rays{position:absolute;left:50%;top:44%;width:360px;height:360px;translate:-50% -50%;z-index:0;
+    border-radius:50%;opacity:0;transition:opacity .5s var(--ease);will-change:transform,opacity;
+    background:repeating-conic-gradient(from 0deg,
+      color-mix(in srgb,var(--accent) 38%,transparent) 0deg 7deg, transparent 7deg 20deg);
+    -webkit-mask:radial-gradient(circle, #000 0%, transparent 66%);
+            mask:radial-gradient(circle, #000 0%, transparent 66%);
+    animation:spin 14s linear infinite}
+  .box-wrap.charging ~ .rays{opacity:.45}
+  .stage.revealed .rays{opacity:.6}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
   /* a caixinha */
-  .box-wrap{position:relative;width:172px;height:160px;cursor:pointer;
+  .box-wrap{position:relative;width:172px;height:160px;cursor:pointer;z-index:2;
     animation:float 4.5s ease-in-out infinite}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
   .glow{position:absolute;inset:-40% -30%;border-radius:50%;z-index:0;
@@ -95,29 +127,55 @@
   .bow::after{right:0;transform:rotate(22deg)}
 
   .tap-hint{margin-top:26px;color:var(--muted);font-size:13.5px;letter-spacing:.04em;
-    display:flex;align-items:center;gap:7px}
+    display:flex;align-items:center;gap:7px;z-index:2}
   .tap-hint b{color:var(--cream);font-weight:600}
 
+  /* carregando a surpresa (suspense) */
+  .box-wrap.charging{animation:charge .8s var(--ease)}
+  @keyframes charge{
+    0%{transform:translateY(0) scale(1) rotate(0)}
+    30%{transform:translateY(-2px) scale(1.05) rotate(-3deg)}
+    45%{transform:translateY(-2px) scale(1.06) rotate(3deg)}
+    60%{transform:translateY(-3px) scale(1.07) rotate(-3deg)}
+    75%{transform:translateY(-3px) scale(1.08) rotate(3deg)}
+    100%{transform:translateY(-6px) scale(1.12) rotate(0)}}
+  .box-wrap.charging .glow{opacity:1;inset:-70% -55%}
+
   /* estados de abertura */
-  .box-wrap.opening{animation:shake .42s var(--ease)}
-  @keyframes shake{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-3px) rotate(-3deg)}
-    40%{transform:translateY(-3px) rotate(3deg)}60%{transform:translateY(-3px) rotate(-2deg)}
-    80%{transform:translateY(-3px) rotate(2deg)}}
-  .box-wrap.open .lid{transform:translateY(-72px) rotate(-12deg);opacity:0}
-  .box-wrap.open .bow{transform:translate(-50%,-90px) scale(.6);opacity:0}
-  .box-wrap.open .glow{opacity:1;inset:-70% -55%}
+  .box-wrap.open .lid{transform:translateY(-78px) rotate(-12deg);opacity:0}
+  .box-wrap.open .bow{transform:translate(-50%,-96px) scale(.6);opacity:0}
+  .box-wrap.open .glow{opacity:1;inset:-80% -65%}
+  .box-wrap.open{animation:popOut .5s var(--ease)}
+  @keyframes popOut{0%{transform:scale(1.12)}45%{transform:scale(.9)}100%{transform:scale(1)}}
 
   /* card revelado */
   .reveal{position:relative;z-index:5;width:100%;max-width:360px;background:var(--card);color:var(--ink);
-    border-radius:var(--radius);padding:34px 28px 30px;text-align:center;
+    border-radius:var(--radius);padding:30px 28px 28px;text-align:center;overflow:hidden;
     box-shadow:0 30px 70px -22px rgba(0,0,0,.6);
     opacity:0;transform:translateY(26px) scale(.96);pointer-events:none;
-    transition:opacity .5s var(--ease) .15s, transform .6s var(--ease) .15s;
+    transition:opacity .5s var(--ease) .12s, transform .6s var(--ease) .12s, box-shadow .5s var(--ease);
     display:none}
-  .reveal.show{display:block;opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+  .reveal.show{display:block;opacity:1;transform:translateY(0) scale(1);pointer-events:auto;
+    animation:cardPop .6s var(--ease)}
+  @keyframes cardPop{0%{transform:translateY(26px) scale(.9)}60%{transform:translateY(0) scale(1.03)}100%{transform:translateY(0) scale(1)}}
+  /* brilho que varre o card */
+  .reveal::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(120deg,transparent 32%,rgba(255,255,255,.55) 50%,transparent 68%);
+    transform:translateX(-130%)}
+  .reveal.show::after{animation:sweep 1.05s var(--ease) .28s}
+  @keyframes sweep{to{transform:translateX(130%)}}
+
+  .reveal .rarity{display:none;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+    font-weight:800;padding:6px 13px;border-radius:999px;margin-bottom:12px}
+  .reveal.r-especial .rarity{display:inline-flex;background:#e7f7f0;color:#0e7a59}
+  .reveal.r-raro .rarity{display:inline-flex;background:linear-gradient(90deg,#fff0c2,#ffdf86);color:#8a5810}
+  .reveal.r-lendario .rarity{display:inline-flex;color:#7a4e06;
+    background:linear-gradient(90deg,#ffe9a8,#ffd54a,#ffe9a8);
+    box-shadow:0 0 0 1px rgba(255,213,74,.6),0 8px 22px -6px rgba(255,200,60,.7)}
+
   .reveal .tag{display:inline-block;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
     font-weight:700;color:var(--accent-ink);background:color-mix(in srgb,var(--accent) 18%,#fff);
-    padding:6px 12px;border-radius:20px;margin-bottom:18px}
+    padding:6px 12px;border-radius:20px;margin-bottom:16px}
   .reveal .body{font-family:"Fraunces",serif;font-size:24px;line-height:1.34;font-weight:500;color:#241a3d}
   .reveal.tipo-frase .body{font-family:"DM Sans",sans-serif;font-weight:700;font-size:23px;line-height:1.3}
   .reveal.tipo-vibe{background:linear-gradient(150deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#7b3ff2))}
@@ -126,29 +184,44 @@
   .reveal .emoji{font-size:48px;display:block;margin-bottom:14px}
   .reveal .ref{margin-top:16px;font-size:13px;font-weight:600;color:#6b5f86;letter-spacing:.02em}
 
-  .actions{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:4px}
+  /* glow por raridade no card */
+  .reveal.r-raro{box-shadow:0 30px 70px -22px rgba(0,0,0,.6),0 0 46px -6px var(--accent)}
+  .reveal.r-lendario{animation:cardPop .6s var(--ease),legGlow 1.7s ease-in-out .6s infinite alternate}
+  @keyframes legGlow{
+    from{box-shadow:0 30px 80px -20px rgba(0,0,0,.6),0 0 42px -8px #ffd54a,0 0 0 2px rgba(255,213,74,.45)}
+    to{box-shadow:0 32px 92px -18px rgba(0,0,0,.6),0 0 82px 0 #ffd54a,0 0 0 2px rgba(255,213,74,.85)}}
+
+  .actions{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:4px;z-index:2}
   .btn{border:0;font-family:inherit;font-weight:700;font-size:16px;cursor:pointer;
     padding:16px 26px;border-radius:16px;width:100%;max-width:360px;transition:.2s var(--ease)}
   .btn-primary{background:var(--accent);color:var(--ink);box-shadow:0 14px 30px -10px color-mix(in srgb,var(--accent) 70%,transparent)}
   .btn-primary:active{transform:translateY(2px)}
   .btn-ghost{background:transparent;color:var(--cream);border:1px solid rgba(255,255,255,.16);max-width:360px}
   .btn-ghost:active{transform:translateY(2px)}
+  /* "abrir outra" pulsando, convidando o próximo open */
+  #againBtn{animation:invite 2.2s var(--ease) infinite}
+  @keyframes invite{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}50%{box-shadow:0 0 0 4px rgba(255,255,255,.06)}}
 
-  footer{text-align:center;color:var(--muted);font-size:13px;line-height:1.5;padding-top:4px}
+  footer{text-align:center;color:var(--muted);font-size:13px;line-height:1.5;padding-top:4px;z-index:2}
   footer b{color:var(--gold-soft);font-weight:600}
   .wa{color:var(--mint);text-decoration:none;font-weight:600}
 
-  /* sparkles do estouro */
-  .spark{position:absolute;left:50%;top:46%;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:6;opacity:0}
-  .burst .spark{animation:fly .7s var(--ease) forwards}
-  @keyframes fly{0%{opacity:1;transform:translate(0,0) scale(1)}
-    100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
+  /* toast de marco (sequência) */
+  .toast{position:fixed;left:50%;top:24%;translate:-50% 0;z-index:45;pointer-events:none;
+    font-weight:800;font-size:15px;color:#3a2a06;padding:13px 20px;border-radius:16px;white-space:nowrap;
+    background:linear-gradient(90deg,#ffe49a,#ffd24a);box-shadow:0 18px 40px -12px rgba(255,190,40,.7);
+    opacity:0}
+  .toast.show{animation:toastPop 1.9s var(--ease)}
+  @keyframes toastPop{0%{opacity:0;transform:translate(-50%,14px) scale(.8)}
+    14%{opacity:1;transform:translate(-50%,0) scale(1.04)}24%{transform:translate(-50%,0) scale(1)}
+    80%{opacity:1}100%{opacity:0;transform:translate(-50%,-10px) scale(.96)}}
 
   @media (prefers-reduced-motion: reduce){
-    .box-wrap,.stars i{animation:none!important}
+    .box-wrap,.stars i,.rays,#againBtn,.reveal.r-lendario{animation:none!important}
     .reveal{transition:opacity .2s linear}
+    .reveal.show{animation:none}
     .box-wrap.open .lid,.box-wrap.open .bow{transition:opacity .2s linear}
-    .spark{display:none}
+    .reveal.show::after{animation:none}
   }
 
   /* ===== modal de assinatura ===== */
@@ -202,13 +275,18 @@
   .await{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;color:var(--muted);font-size:13.5px}
   .spinner{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.18);border-top-color:var(--gold);
     border-radius:50%;animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
   .ok-emoji{font-size:54px;text-align:center;margin:6px 0 4px}
   .hidden{display:none!important}
 </style>
 </head>
 <body data-vibe="serenidade">
   <div class="stars" id="stars" aria-hidden="true"></div>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div class="flash" id="flash" aria-hidden="true"></div>
+  <div class="toast" id="toast" aria-hidden="true"></div>
+
+  <button class="hud-btn snd" id="snd" aria-label="Ligar/desligar som">🔊</button>
+  <div class="hud-btn streak" id="streak" aria-live="polite"><span class="fire">🔥</span><span id="streakN">0</span> seguidas</div>
 
   <div class="shell">
     <header>
@@ -236,9 +314,11 @@
         <div class="lid"></div>
         <div class="bow"></div>
       </div>
+      <div class="rays" aria-hidden="true"></div>
       <div class="tap-hint" id="hint">toque na caixinha · <b>é surpresa ✨</b></div>
 
       <div class="reveal" id="reveal" aria-live="polite">
+        <span class="rarity" id="rRar"></span>
         <span class="tag" id="rTag">Versículo</span>
         <span class="emoji" id="rEmoji" style="display:none"></span>
         <div class="body" id="rBody"></div>
@@ -248,7 +328,7 @@
 
     <div class="actions">
       <button class="btn btn-primary" id="openBtn">Abrir caixinha</button>
-      <button class="btn btn-ghost" id="againBtn" style="display:none">Abrir outra</button>
+      <button class="btn btn-ghost" id="againBtn" style="display:none">Abrir outra ✨</button>
     </div>
 
     <footer>
@@ -395,13 +475,150 @@ async function sortear(perfil){
   return sortearLocal(perfil);
 }
 
+/* ============================================================
+   RECOMPENSA VARIÁVEL — o que vicia (do bem).
+   Cada abertura tem uma RARIDADE sorteada. Quanto mais rara,
+   maior a festa: confete, moedas, flash, som e vibração. A maioria
+   é "comum" e limpa — de vez em quando vem uma LENDÁRIA dourada.
+============================================================ */
+const RAR = {
+  comum:    { p:62, cls:"r-comum",    label:"",               confete:24,  moedas:0,  flash:0,    notas:[523.25,659.25],                         vib:[14] },
+  especial: { p:26, cls:"r-especial", label:"✦ Especial",     confete:46,  moedas:0,  flash:.22,  notas:[523.25,659.25,783.99],                  vib:[18,40,18] },
+  raro:     { p:9,  cls:"r-raro",     label:"✦✦ Raro",        confete:80,  moedas:16, flash:.5,   notas:[523.25,659.25,783.99,1046.5],           vib:[26,40,26,40,60] },
+  lendario: { p:3,  cls:"r-lendario", label:"✦✦✦ Lendária",   confete:150, moedas:48, flash:.9,   notas:[523.25,659.25,783.99,1046.5,1318.5],    vib:[10,28,10,28,10,28,150] }
+};
+function rollRaridade(){
+  let r = Math.random()*100;
+  for(const k of ["comum","especial","raro","lendario"]){ r -= RAR[k].p; if(r<=0) return k; }
+  return "comum";
+}
+
+const motionOK = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
+const PALETA = ["#f6d99a","#ffffff","#ff7a6b","#6fe3c4","#e8b95e","#ffd54a","#c9a7ff"];
+const OURO   = ["#ffd54a","#f6d99a","#e8b95e","#fff3cf","#ffbf3d"];
+
+/* ---------- ÁUDIO (WebAudio, sem assets) ---------- */
+let actx=null;
+let muted = localStorage.getItem("sb_mute")==="1";
+function audioCtx(){
+  if(!actx){ const AC = window.AudioContext||window.webkitAudioContext; if(AC) actx = new AC(); }
+  if(actx && actx.state==="suspended") actx.resume();
+  return actx;
+}
+function tone(freq, start, dur, type="triangle", vol=.18){
+  const a=audioCtx(); if(!a) return;
+  const o=a.createOscillator(), g=a.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001, start);
+  g.gain.linearRampToValueAtTime(vol, start+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+  o.connect(g).connect(a.destination); o.start(start); o.stop(start+dur+0.02);
+}
+function somCarga(){
+  if(muted) return; const a=audioCtx(); if(!a) return;
+  const t=a.currentTime, o=a.createOscillator(), g=a.createGain();
+  o.type="sine";
+  o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(620,t+.68);
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(.12,t+.12);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+.72);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+.74);
+}
+function somPremio(rar){
+  if(muted) return; const a=audioCtx(); if(!a) return;
+  const t=a.currentTime, notas=RAR[rar].notas;
+  notas.forEach((f,i)=> tone(f, t+i*0.085, .5, "triangle", .17));
+  if(rar==="lendario"){ tone(1568, t+notas.length*0.085, .7, "sine", .14); } // brilho final
+}
+
+/* ---------- VIBRAÇÃO ---------- */
+function vibrar(p){ if(navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } }
+
+/* ---------- CANVAS de partículas (confete + moedas) ---------- */
+const fx = document.getElementById("fx"), fxc = fx.getContext("2d");
+let parts=[], raf=null, DPR=Math.min(window.devicePixelRatio||1, 2);
+function sizeFx(){ fx.width=innerWidth*DPR; fx.height=innerHeight*DPR; fxc.setTransform(DPR,0,0,DPR,0,0); }
+sizeFx(); addEventListener("resize", sizeFx);
+function loop(){
+  fxc.clearRect(0,0,innerWidth,innerHeight);
+  for(const p of parts){
+    p.vy += p.g; p.vx *= .992; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
+    const o = Math.max(0, Math.min(1, p.life/12));
+    fxc.save(); fxc.globalAlpha=o; fxc.translate(p.x,p.y); fxc.rotate(p.rot);
+    fxc.fillStyle=p.color;
+    if(p.coin){
+      fxc.beginPath(); fxc.ellipse(0,0,p.s,p.s*Math.abs(Math.cos(p.rot))*.7+p.s*.3,0,0,7); fxc.fill();
+    } else {
+      fxc.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);
+    }
+    fxc.restore();
+  }
+  parts = parts.filter(p=> p.life>0 && p.y < innerHeight+60);
+  if(parts.length) raf=requestAnimationFrame(loop);
+  else { raf=null; fxc.clearRect(0,0,innerWidth,innerHeight); }
+}
+function go(){ if(!raf) raf=requestAnimationFrame(loop); }
+function confete(n, palette, power){
+  n = Math.round(n * (motionOK ? 1 : 0.3));
+  const ox=innerWidth*0.5, oy=innerHeight*0.46;
+  for(let i=0;i<n;i++){
+    const ang=Math.random()*Math.PI*2, sp=power*(0.4+Math.random());
+    parts.push({ x:ox, y:oy, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp-power*0.5,
+      g:0.16+Math.random()*0.06, s:6+Math.random()*7, rot:Math.random()*7, vr:(Math.random()-.5)*0.5,
+      color:palette[i%palette.length], life:70+Math.random()*40, coin:false });
+  }
+  go();
+}
+function moedas(n){
+  n = Math.round(n * (motionOK ? 1 : 0.3));
+  for(let i=0;i<n;i++){
+    parts.push({ x:Math.random()*innerWidth, y:-20-Math.random()*innerHeight*0.4,
+      vx:(Math.random()-.5)*1.2, vy:2+Math.random()*2, g:0.14+Math.random()*0.05,
+      s:7+Math.random()*5, rot:Math.random()*7, vr:(Math.random()-.5)*0.6,
+      color:OURO[i%OURO.length], life:120+Math.random()*60, coin:true });
+  }
+  go();
+}
+
+/* ---------- flash de tela ---------- */
+const flashEl=document.getElementById("flash");
+function flash(intensidade){
+  if(!motionOK || intensidade<=0) return;
+  flashEl.style.setProperty("--flash", intensidade);
+  flashEl.classList.remove("go"); void flashEl.offsetWidth; flashEl.classList.add("go");
+}
+
+/* ---------- sequência (streak) ---------- */
+const streakEl=document.getElementById("streak"), streakN=document.getElementById("streakN");
+const toastEl=document.getElementById("toast");
+let streak=0;
+function toast(txt){
+  toastEl.textContent=txt; toastEl.classList.remove("show"); void toastEl.offsetWidth; toastEl.classList.add("show");
+}
+function bumpStreak(){
+  streak++;
+  streakN.textContent=streak;
+  streakEl.classList.add("show");
+  streakEl.classList.remove("bump"); void streakEl.offsetWidth; streakEl.classList.add("bump");
+  if([5,10,20,50].includes(streak)){ toast(`🔥 ${streak} seguidas!`); flash(.4); confete(60, PALETA, 9); vibrar([20,40,60]); }
+}
+
 /* ---------- UI ---------- */
 const body=document.body, box=document.getElementById("box"), stage=document.getElementById("stage");
 const reveal=document.getElementById("reveal"), hint=document.getElementById("hint");
 const openBtn=document.getElementById("openBtn"), againBtn=document.getElementById("againBtn");
 const rTag=document.getElementById("rTag"), rBody=document.getElementById("rBody"),
-      rRef=document.getElementById("rRef"), rEmoji=document.getElementById("rEmoji");
+      rRef=document.getElementById("rRef"), rEmoji=document.getElementById("rEmoji"), rRar=document.getElementById("rRar");
 let vibeAtual="serenidade", abrindo=false;
+
+/* som toggle */
+const sndBtn=document.getElementById("snd");
+sndBtn.textContent = muted ? "🔇" : "🔊";
+sndBtn.addEventListener("click",()=>{
+  muted=!muted; localStorage.setItem("sb_mute", muted?"1":"0");
+  sndBtn.textContent = muted ? "🔇" : "🔊";
+  if(!muted){ audioCtx(); tone(659.25, (actx?actx.currentTime:0)+0.001, .25, "triangle", .15); }
+});
 
 function aplicarAcento(v){
   const a=ACENTO[v];
@@ -422,43 +639,51 @@ document.querySelectorAll(".vibe").forEach(btn=>{
 
 const TAGS={versiculo:"Versículo",frase:"Frase",vibe:"Vibe do dia"};
 
-function estourar(){
-  const cores=[getComputedStyle(document.documentElement).getPropertyValue("--accent"),"#f6d99a","#fff","#ff7a6b","#6fe3c4"];
-  for(let i=0;i<14;i++){
-    const s=document.createElement("i"); s.className="spark";
-    const ang=Math.random()*Math.PI*2, dist=60+Math.random()*90;
-    s.style.setProperty("--dx",Math.cos(ang)*dist+"px");
-    s.style.setProperty("--dy",Math.sin(ang)*dist+"px");
-    s.style.background=cores[i%cores.length];
-    stage.appendChild(s); setTimeout(()=>s.remove(),750);
-  }
-  stage.classList.add("burst"); setTimeout(()=>stage.classList.remove("burst"),60);
-}
-
 async function abrir(){
   if(abrindo) return; abrindo=true;
   openBtn.disabled=true;
-  const item=await sortear(PERFIL[vibeAtual]);
+  audioCtx(); // destrava o áudio dentro do gesto do usuário
 
-  box.classList.add("opening");
-  setTimeout(()=>{ box.classList.remove("opening"); box.classList.add("open"); estourar(); },380);
+  const item = await sortear(PERFIL[vibeAtual]);
+  const rar  = rollRaridade();
 
-  setTimeout(()=>{
-    reveal.className="reveal tipo-"+item.tipo+" show";
-    rTag.textContent=TAGS[item.tipo]||"Surpresa";
-    rBody.textContent=item.texto;
-    if(item.emoji){ rEmoji.style.display="block"; rEmoji.textContent=item.emoji; }
-    else rEmoji.style.display="none";
-    if(item.ref){ rRef.style.display="block"; rRef.textContent="— "+item.ref; }
-    else rRef.style.display="none";
-    hint.style.visibility="hidden";
-    openBtn.style.display="none"; againBtn.style.display="block";
-    abrindo=false; openBtn.disabled=false;
-  },820);
+  // 1) SUSPENSE — carrega a surpresa
+  box.classList.add("charging");
+  somCarga(); vibrar([8]);
+  await wait(motionOK ? 760 : 80);
+  box.classList.remove("charging");
+
+  // 2) ESTOURO — abre, flash, partículas, som, vibração (escala com a raridade)
+  box.classList.add("open");
+  stage.classList.add("revealed");
+  const cfg = RAR[rar];
+  flash(cfg.flash);
+  confete(cfg.confete, rar==="lendario" ? OURO : PALETA, rar==="comum" ? 7 : rar==="especial" ? 8.5 : 11);
+  if(cfg.moedas) moedas(cfg.moedas);
+  somPremio(rar);
+  vibrar(cfg.vib);
+
+  await wait(motionOK ? 200 : 40);
+
+  // 3) REVELAÇÃO
+  reveal.className = "reveal tipo-"+item.tipo+" "+cfg.cls+" show";
+  if(cfg.label){ rRar.textContent=cfg.label; } else { rRar.textContent=""; }
+  rTag.textContent = TAGS[item.tipo]||"Surpresa";
+  rBody.textContent = item.texto;
+  if(item.emoji){ rEmoji.style.display="block"; rEmoji.textContent=item.emoji; }
+  else rEmoji.style.display="none";
+  if(item.ref){ rRef.style.display="block"; rRef.textContent="— "+item.ref; }
+  else rRef.style.display="none";
+  hint.style.visibility="hidden";
+  openBtn.style.display="none"; againBtn.style.display="block";
+
+  bumpStreak();
+  abrindo=false; openBtn.disabled=false;
 }
 
 function resetar(){
-  box.classList.remove("open","opening");
+  box.classList.remove("open","charging");
+  stage.classList.remove("revealed");
   reveal.className="reveal";
   hint.style.visibility="visible";
   openBtn.style.display="block"; openBtn.disabled=false;
@@ -468,13 +693,13 @@ function resetar(){
 
 openBtn.addEventListener("click",abrir);
 againBtn.addEventListener("click",()=>{ resetar(); setTimeout(abrir,120); });
-box.addEventListener("click",()=>{ if(!box.classList.contains("open")) abrir(); });
+box.addEventListener("click",()=>{ if(!box.classList.contains("open") && !abrindo) abrir(); });
 box.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();abrir();} });
 
 /* ============================================================
    ASSINATURA — fluxo Pix recorrente.
-   Com API_BASE preenchido: abre o modal, gera Pix no backend e
-   confirma sozinho (polling). Sem backend: cai pro link do WhatsApp.
+   Com backend ativo: abre o modal, gera Pix e confirma sozinho
+   (polling). Sem backend (file://): cai pro link do WhatsApp.
 ============================================================ */
 const WA_FALLBACK = "https://wa.me/5598984221002?text=" +
   encodeURIComponent("Quero receber minha caixinha todo dia ✨");
@@ -593,7 +818,12 @@ function iniciarPolling(assinaturaId){
       const r = await fetch(`${API_BASE}/assinatura/${assinaturaId}/status`);
       if(!r.ok) return;
       const s = await r.json();
-      if(s.status==="ativa"){ clearInterval(pollTimer); pollTimer=null; mostrarEtapa("ok"); }
+      if(s.status==="ativa"){
+        clearInterval(pollTimer); pollTimer=null;
+        mostrarEtapa("ok");
+        // festa de confirmação
+        flash(.6); confete(120, OURO, 11); moedas(40); somPremio("lendario"); vibrar([20,40,20,40,120]);
+      }
     }catch(e){ /* tenta de novo no proximo tick */ }
   }, 3000);
   document.getElementById("confirmStub").onclick = async ()=>{
