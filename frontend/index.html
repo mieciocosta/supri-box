@@ -179,6 +179,10 @@
   .reveal .ref{margin-top:20px;font-size:12.5px;font-weight:500;color:var(--surface-sub);letter-spacing:.02em}
 
   .actions{display:flex;flex-direction:column;align-items:center;gap:12px;z-index:2}
+  .daily{font-size:12px;color:var(--muted);letter-spacing:.02em;text-align:center;line-height:1.5}
+  footer .legal{margin-top:8px}
+  footer .legal a{color:var(--muted);text-decoration:none;font-size:11px;opacity:.8}
+  footer .legal a:hover{opacity:1;text-decoration:underline}
   .btn{border:0;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer;
     padding:16px 26px;border-radius:15px;width:100%;max-width:354px;transition:.35s var(--soft);letter-spacing:.01em}
   .btn-primary{background:var(--ink);color:#15181d;box-shadow:0 12px 30px -12px rgba(0,0,0,.6)}
@@ -298,13 +302,15 @@
     </div>
 
     <div class="actions">
+      <div class="daily" id="daily" style="display:none">✦ Sua mensagem de hoje — volte amanhã para a próxima</div>
       <button class="btn btn-primary" id="openBtn">Revelar a caixinha</button>
-      <button class="btn btn-ghost" id="againBtn" style="display:none">Revelar outra</button>
+      <button class="btn btn-ghost" id="againBtn" style="display:none">Receber todo dia →</button>
     </div>
 
     <footer>
       <b>Receba todo dia</b>, direto no
       <a class="wa" href="#" id="wa">WhatsApp →</a>
+      <div class="legal"><a href="/privacidade.html">Privacidade</a></div>
     </footer>
   </div>
 
@@ -319,11 +325,11 @@
 
         <div class="field">
           <label for="fNome">Seu nome</label>
-          <input id="fNome" type="text" autocomplete="name" placeholder="Como te chamamos?" />
+          <input id="fNome" type="text" autocomplete="name" maxlength="60" placeholder="Como te chamamos?" />
         </div>
         <div class="field">
           <label for="fWhats">WhatsApp (com DDD)</label>
-          <input id="fWhats" type="tel" inputmode="numeric" autocomplete="tel" placeholder="11 9XXXX-XXXX" />
+          <input id="fWhats" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="11 9XXXX-XXXX" />
         </div>
 
         <div class="field">
@@ -576,17 +582,30 @@ document.querySelectorAll(".vibe").forEach(btn=>{
 });
 
 const TAGS={versiculo:"Versículo",frase:"Palavra de hoje",vibe:"Força do dia"};
+const dailyEl=document.getElementById("daily");
+
+/* "Mensagem do dia": uma por vibe por dia, persistente. Reabrir mostra a mesma;
+   muda de verdade só amanhã. Cria o ritual diário e o funil pra assinatura. */
+function hojeKey(){ const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+function msgDoDia(vibe){ try{ const v=localStorage.getItem("sb_msg_"+vibe+"_"+hojeKey()); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function salvarMsg(vibe,item){ try{ localStorage.setItem("sb_msg_"+vibe+"_"+hojeKey(), JSON.stringify(item)); }catch(e){} }
+
+let runId=0; // cancela aberturas em andamento -> corrige o bug ao trocar de vibe no meio
 
 async function abrir(){
   if(abrindo) return; abrindo=true; openBtn.disabled=true; aud();
+  const myRun=++runId;
 
-  const item = await sortear(PERFIL[vibeAtual]);
-  const rich = Math.random() < 0.18; // momento sutilmente mais rico (sem rótulo)
+  let item = msgDoDia(vibeAtual);
+  if(!item){ item = await sortear(PERFIL[vibeAtual]); if(item) salvarMsg(vibeAtual,item); }
+  if(myRun!==runId) return; // trocou de vibe enquanto buscava -> aborta limpo
+  const rich = Math.random() < 0.18; // brilho sutilmente mais rico (sem rótulo)
 
   // 1) inspira
   orb.classList.add("opening");
   somAbrir(); if(navigator.vibrate) try{navigator.vibrate(8)}catch(e){}
   await wait(motionOK ? 520 : 60);
+  if(myRun!==runId) return;
 
   // 2) floresce — orbe se dissolve, luz suave, motes sobem
   orb.classList.remove("opening"); orb.classList.add("open");
@@ -597,6 +616,7 @@ async function abrir(){
   hint.classList.add("gone");
 
   await wait(motionOK ? 300 : 50);
+  if(myRun!==runId) return;
 
   // 3) revela
   reveal.className = "reveal tipo-"+item.tipo+(rich?" rich":"")+" show";
@@ -604,22 +624,23 @@ async function abrir(){
   rBody.textContent = item.texto;
   if(item.emoji){ rEmoji.style.display="block"; rEmoji.textContent=item.emoji; } else rEmoji.style.display="none";
   if(item.ref){ rRef.style.display="block"; rRef.textContent="— "+item.ref; } else rRef.style.display="none";
-  openBtn.style.display="none"; againBtn.style.display="block";
+  openBtn.style.display="none"; againBtn.style.display="block"; dailyEl.style.display="block";
 
   abrindo=false; openBtn.disabled=false;
 }
 
 function resetar(){
+  runId++; // invalida qualquer abertura em andamento (fim do bug da troca)
   orb.classList.remove("open","opening");
   reveal.className="reveal";
   hint.classList.remove("gone");
   openBtn.style.display="block"; openBtn.disabled=false;
-  againBtn.style.display="none";
+  againBtn.style.display="none"; dailyEl.style.display="none";
   abrindo=false;
 }
 
 openBtn.addEventListener("click",abrir);
-againBtn.addEventListener("click",()=>{ resetar(); setTimeout(abrir,160); });
+againBtn.addEventListener("click",()=>{ abrirModal(); }); // "Receber todo dia" -> assinatura
 orb.addEventListener("click",()=>{ if(!orb.classList.contains("open") && !abrindo) abrir(); });
 
 /* ============================================================
@@ -687,10 +708,12 @@ perfilPick.querySelectorAll(".pick").forEach(b=>{
   });
 });
 async function gerarPix(){
-  const nome=document.getElementById("fNome").value.trim();
-  const whats=document.getElementById("fWhats").value.replace(/\D/g,"");
+  const nome=document.getElementById("fNome").value.trim().slice(0,60);
+  let whats=document.getElementById("fWhats").value.replace(/\D/g,"");
+  if((whats.length===13||whats.length===12)&&whats.startsWith("55")) whats=whats.slice(2);
   formMsg.textContent="";
-  if(whats.length<10){ formMsg.textContent="Coloque um WhatsApp válido com DDD."; return; }
+  if(whats.length<10||whats.length>11){ formMsg.textContent="WhatsApp inválido. Use DDD + número (ex: 11 9XXXX-XXXX)."; return; }
+  if(whats.length===11&&whats[2]!=="9"){ formMsg.textContent="Confira o número: celular tem o 9 após o DDD."; return; }
   if(!planoSel){ formMsg.textContent="Escolha um plano."; return; }
   goPix.disabled=true; goPix.textContent="Gerando…";
   try{
