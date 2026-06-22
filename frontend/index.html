@@ -119,9 +119,9 @@
     border-radius:50%;pointer-events:none;opacity:0;filter:blur(10px);
     background:radial-gradient(circle, color-mix(in srgb,var(--accent) 42%,#fff 14%) 0%,
       color-mix(in srgb,var(--accent) 22%,transparent) 38%, transparent 64%)}
-  .bloom.go{animation:bloom 1.5s var(--soft)}
-  @keyframes bloom{0%{opacity:0;transform:translate(-50%,-50%) scale(.45)}
-    28%{opacity:.55}100%{opacity:0;transform:translate(-50%,-50%) scale(1.15)}}
+  .bloom.go{animation:bloom 1.6s var(--soft)}
+  @keyframes bloom{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+    22%{opacity:.85}100%{opacity:0;transform:translate(-50%,-50%) scale(1.25)}}
 
   /* o orbe (respira) */
   .orb{position:relative;width:148px;height:148px;border:0;background:none;padding:0;cursor:pointer;
@@ -349,7 +349,7 @@
     <footer>
       <b>Receba todo dia</b>, direto no
       <a class="wa" href="#" id="wa">WhatsApp →</a>
-      <div class="legal"><a href="/privacidade.html">Privacidade</a></div>
+      <div class="legal"><a href="/privacidade.html">Privacidade</a> · <span style="opacity:.55">v6</span></div>
     </footer>
   </div>
 
@@ -955,7 +955,7 @@ document.getElementById("closePix").addEventListener("click",fecharModal);
 document.getElementById("okDone").addEventListener("click",fecharModal);
 overlay.addEventListener("click",e=>{ if(e.target==overlay) fecharModal(); });
 
-/* PWA — service worker + push (notificações) + splash */
+/* PWA — service worker + push (notificações) + splash + auto-reload */
 function urlB64ToUint8(b){
   const pad="=".repeat((4-b.length%4)%4);
   const s=(b+pad).replace(/-/g,"+").replace(/_/g,"/");
@@ -985,6 +985,14 @@ function fecharSplash(){ const s=document.getElementById("splash"); if(s) s.clas
 window.addEventListener("load",()=> setTimeout(fecharSplash, 950));
 setTimeout(fecharSplash, 2600); // garantia, caso o load demore
 
+// auto-reload quando uma versao nova do app assume o controle -> nunca mais
+// ficar preso numa versao antiga em cache
+if("serviceWorker" in navigator){
+  let _recarregando=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    if(_recarregando) return; _recarregando=true; location.reload();
+  });
+}
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("/sw.js")
