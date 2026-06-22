@@ -112,6 +112,18 @@
     filter:drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 75%,transparent))}
   .vibe[aria-pressed="true"] small{opacity:.85;color:color-mix(in srgb,var(--accent) 80%,var(--ink))}
 
+  /* selo de sequência (streak) — gatilho de voltar todo dia */
+  .streak{position:fixed;top:max(16px,env(safe-area-inset-top));left:18px;z-index:8;
+    display:flex;align-items:center;gap:5px;height:36px;padding:0 13px;border-radius:18px;
+    border:1px solid color-mix(in srgb,#f5a623 45%,transparent);
+    background:linear-gradient(180deg,rgba(245,166,35,.20),rgba(245,166,35,.06));
+    color:#ffd9a0;font-size:13px;font-weight:700;letter-spacing:.01em;backdrop-filter:blur(8px);
+    box-shadow:0 4px 16px -6px rgba(245,166,35,.55);opacity:0;transform:translateY(-8px);
+    transition:.5s var(--soft);pointer-events:none}
+  .streak.show{opacity:1;transform:translateY(0)}
+  .streak .fire{font-size:15px;filter:drop-shadow(0 0 6px rgba(245,166,35,.85))}
+  .streak small{font-weight:500;opacity:.8;font-size:11px}
+
   /* palco */
   .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
     position:relative;min-height:240px}
@@ -172,6 +184,34 @@
   .reveal.rich{box-shadow:0 40px 90px -28px rgba(0,0,0,.7),
     0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent),
     0 0 60px -10px color-mix(in srgb,var(--accent) 45%,transparent)}
+  /* variante RARA (dourada) — recompensa variável = pico de dopamina */
+  .reveal.gold{background:linear-gradient(160deg,#fff7e6,#f6e8cd);
+    box-shadow:0 40px 90px -26px rgba(0,0,0,.7),0 0 0 1.5px rgba(212,160,72,.75),
+      0 0 75px -8px rgba(245,180,70,.6)}
+  .reveal.gold::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(115deg,transparent 32%,rgba(255,243,205,.9) 48%,transparent 64%);
+    transform:translateX(-120%);animation:shine 2.4s var(--soft) .25s}
+  @keyframes shine{0%{transform:translateX(-120%)}60%,100%{transform:translateX(120%)}}
+  .reveal .rare{display:none;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:#b9892f;margin-bottom:12px}
+  .reveal.gold .rare{display:block}
+
+  /* CTA de assinatura — oferta brilhante que puxa o clique */
+  .offer{width:100%;max-width:354px;border:0;border-radius:18px;padding:15px 16px;cursor:pointer;
+    font-family:inherit;text-align:left;color:#3a2a08;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,#ffd98a,#f5b942 55%,#e89a2c);
+    box-shadow:0 14px 34px -12px rgba(245,166,35,.7);transition:.35s var(--soft);
+    display:flex;align-items:center;gap:12px}
+  .offer:hover{transform:translateY(-2px);box-shadow:0 18px 42px -12px rgba(245,166,35,.8)}
+  .offer:active{transform:translateY(0)}
+  .offer::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);
+    transform:translateX(-130%);animation:shine 3.4s var(--soft) 1.2s infinite}
+  .offer .oic{font-size:24px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18))}
+  .offer .ot{flex:1;line-height:1.2}
+  .offer .ot b{display:block;font-size:14.5px;font-weight:700}
+  .offer .ot small{display:block;font-size:11.5px;font-weight:600;opacity:.82;margin-top:2px}
+  .offer .oarrow{font-size:18px;font-weight:700}
 
   .reveal .tag{display:inline-block;font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;
     font-weight:600;color:var(--surface-sub);margin-bottom:18px}
@@ -222,6 +262,7 @@
     .bloom.go{animation:none}
     .orb.opening{animation:none}
     .splash .so{animation:none}
+    .reveal.gold::after,.offer::after{animation:none;display:none}
   }
 
   /* ===== modal de assinatura ===== */
@@ -302,6 +343,7 @@
   <div class="aurora" aria-hidden="true"><b class="a1"></b><b class="a2"></b><b class="a3"></b></div>
   <canvas id="fx" aria-hidden="true"></canvas>
   <button class="snd" id="snd" aria-label="Ligar ou desligar o som">♪</button>
+  <div class="streak" id="streak" aria-hidden="true"><span class="fire">🔥</span><span id="streakN">1</span>&nbsp;<small>dias</small></div>
 
   <div class="shell">
     <header>
@@ -330,6 +372,7 @@
       <div class="hint" id="hint">toque na esfera para revelar</div>
 
       <div class="reveal" id="reveal" aria-live="polite">
+        <div class="rare">✦ Mensagem rara ✦</div>
         <span class="tag" id="rTag">Versículo</span>
         <span class="emoji" id="rEmoji"></span>
         <div class="body" id="rBody"></div>
@@ -344,7 +387,11 @@
           <button class="btn btn-ghost" id="againBtn"><span class="ic">✦</span> Outra</button>
           <button class="btn btn-primary" id="shareBtn"><span class="ic">📤</span> Compartilhar</button>
         </div>
-        <button class="link-min" id="subBtn">Receber todo dia no WhatsApp →</button>
+        <button class="offer" id="subBtn">
+          <span class="oic">🎁</span>
+          <span class="ot"><b>Receba uma todo dia no WhatsApp</b><small id="offerSub">Comece por 1 centavo · menos de R$ 0,33/dia</small></span>
+          <span class="oarrow">→</span>
+        </button>
       </div>
     </div>
 
@@ -597,7 +644,7 @@ function motes(n){
 }
 /* explosão radial colorida no momento da revelação — dopamina sutil, sem ser
    "arcade": jorra do centro pra fora, com o tom da vibe + branco quente */
-function burst(n){
+function burst(n, gold){
   if(!motionOK){ go(); return; }
   const ox=innerWidth*0.5, oy=innerHeight*0.44, col=accentRGB();
   for(let i=0;i<n;i++){
@@ -606,7 +653,7 @@ function burst(n){
       x:ox, y:oy,
       vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp*0.8 - 0.4,
       r:1.6+Math.random()*2.4, alpha:0.6+Math.random()*0.4,
-      color: Math.random()<0.45 ? "#fff" : col,
+      color: gold ? (Math.random()<0.6 ? "#ffce6a" : "#fff") : (Math.random()<0.45 ? "#fff" : col),
       life:max, max:max
     });
   }
@@ -653,10 +700,9 @@ document.querySelectorAll(".vibe").forEach(btn=>{
     try{ btn.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"}); }catch(e){}
     if(v===vibeAtual && reveal.classList.contains("show")) return;
     vibeAtual=v; aplicarAcento(v);
-    // com mensagem na tela -> troca pro novo tipo na hora (fluido);
-    // sem mensagem -> apenas recolore e volta pro orbe
-    if(reveal.classList.contains("show")) swapMensagem();
-    else resetar();
+    // trocar de tipo SEMPRE volta pra esfera -> cada tipo vira um novo "abrir
+    // presente" (mais ritual, mais dopamina). "Outra" re-sorteia o mesmo tipo.
+    resetar();
   });
 });
 
@@ -664,13 +710,17 @@ const TAGS={versiculo:"Versículo",frase:"Palavra de hoje",vibe:"Força do dia"}
 
 let runId=0; // cancela aberturas em andamento -> corrige o bug ao trocar de vibe no meio
 
-/* preenche o card com o conteúdo (compartilhado entre abertura e re-sorteio) */
+/* preenche o card com o conteúdo (compartilhado entre abertura e re-sorteio).
+   gold = recompensa variável (rara, dourada) -> pico de dopamina e vontade de
+   "abrir de novo". rich = brilho intermediário. */
 function preencherCard(item){
   itemAtual=item;
-  const rich = Math.random() < 0.18; // brilho sutilmente mais rico (sem rótulo)
-  reveal.classList.remove("tipo-versiculo","tipo-frase","tipo-vibe");
+  const gold = Math.random() < 0.16;
+  const rich = gold || Math.random() < 0.16;
+  reveal.classList.remove("tipo-versiculo","tipo-frase","tipo-vibe","gold");
   reveal.classList.add("tipo-"+item.tipo);
   reveal.classList.toggle("rich",rich);
+  reveal.classList.toggle("gold",gold);
   rTag.textContent = TAGS[item.tipo]||"Mensagem";
   rBody.textContent = item.texto;
   if(item.emoji){ rEmoji.style.display="block"; rEmoji.textContent=item.emoji; } else rEmoji.style.display="none";
@@ -678,8 +728,38 @@ function preencherCard(item){
   if(ref){ rRef.style.display="block"; rRef.textContent="— "+ref; } else rRef.style.display="none";
   const ex=expDe(item);
   if(ex){ rExplic.style.display="block"; rExplic.textContent=ex; } else rExplic.style.display="none";
-  return rich;
+  return { rich, gold };
 }
+
+/* ===== sequência de dias (streak) — gatilho de retorno diário (dopamina ética) ===== */
+const streakEl=document.getElementById("streak"), streakN=document.getElementById("streakN");
+const diaStr=(d=new Date())=> d.toISOString().slice(0,10);
+function streakAtual(){
+  const last=localStorage.getItem("sb_last");
+  const hoje=diaStr(), ontem=diaStr(new Date(Date.now()-864e5));
+  let s=parseInt(localStorage.getItem("sb_streak")||"0",10);
+  if(last!==hoje && last!==ontem) s=0;   // sequência quebrou
+  return s;
+}
+function mostrarStreak(s,pulse){
+  if(s<1){ streakEl.classList.remove("show"); return; }
+  streakN.textContent=s;
+  streakEl.classList.add("show");
+  if(pulse && streakEl.animate){
+    streakEl.animate([{transform:"scale(1)"},{transform:"scale(1.18)"},{transform:"scale(1)"}],{duration:520,easing:"ease-out"});
+  }
+}
+function registrarDia(){
+  const hoje=diaStr(), last=localStorage.getItem("sb_last");
+  if(last===hoje){ mostrarStreak(streakAtual(),false); return; } // já contou hoje
+  const ontem=diaStr(new Date(Date.now()-864e5));
+  let s=parseInt(localStorage.getItem("sb_streak")||"0",10);
+  s = (last===ontem) ? s+1 : 1;
+  localStorage.setItem("sb_streak",String(s));
+  localStorage.setItem("sb_last",hoje);
+  mostrarStreak(s,true);
+}
+mostrarStreak(streakAtual(),false);
 
 async function abrir(){
   if(abrindo) return; abrindo=true; aud();
@@ -697,12 +777,13 @@ async function abrir(){
   // 2) floresce — orbe se dissolve, luz suave, motes sobem
   orb.classList.remove("opening"); orb.classList.add("open");
   bloomEl.classList.remove("go"); void bloomEl.offsetWidth; bloomEl.classList.add("go");
-  const rich = preencherCard(item);
-  motes(rich ? 42 : 28);
-  burst(rich ? 30 : 20);
-  somRevelar(rich);
-  if(navigator.vibrate) try{navigator.vibrate(rich?[12,40,16]:[12])}catch(e){}
+  const { rich, gold } = preencherCard(item);
+  motes(gold ? 54 : rich ? 42 : 28);
+  burst(gold ? 42 : rich ? 30 : 20, gold);
+  somRevelar(rich || gold);
+  if(navigator.vibrate) try{navigator.vibrate(gold?[14,50,18,50,22]:rich?[12,40,16]:[12])}catch(e){}
   hint.classList.add("gone");
+  registrarDia(); // conta a sequência de dias quando a pessoa realmente revela
 
   await wait(motionOK ? 240 : 40);
   if(myRun!==runId) return;
@@ -725,11 +806,11 @@ async function swapMensagem(){
   if(!item){ reveal.classList.remove("swapping"); return; }
   await wait(motionOK ? 190 : 20);
   if(myRun!==runId) return;
-  preencherCard(item);
+  const { gold } = preencherCard(item);
   void reveal.offsetWidth;                           // reflow -> garante a volta suave
   reveal.classList.remove("swapping");
-  motes(16); burst(14); somRevelar(false);
-  if(navigator.vibrate) try{navigator.vibrate(7)}catch(e){}
+  motes(gold?40:16); burst(gold?32:14, gold); somRevelar(gold);
+  if(navigator.vibrate) try{navigator.vibrate(gold?[14,50,18]:7)}catch(e){}
 }
 
 function resetar(){
